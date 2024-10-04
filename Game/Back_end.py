@@ -10,7 +10,7 @@ default_letter_values = {'A': 1, 'B': 3, 'C': 3, 'D': 2, 'E': 1, 'F': 4, 'G': 2,
 
 class Game:
     # all arguments have a defualt value but can be overwritten
-    def __init__(self, board_size : tuple[int,int] =(7, 7), rack_size : int =7, letter_bag : list[str]=default_letter_bag, letter_values : dict[str, int]=default_letter_values, mode: str="local_mult"):
+    def __init__(self, board_size: tuple[int, int] = (7, 7), rack_size: int = 7, letter_bag: list[str] = default_letter_bag, letter_values: dict[str, int] = default_letter_values, mode: str = "local_mult"):
         """Innitialization function
         Note: all arguments have a defualt value but can be overwritten
 
@@ -76,7 +76,7 @@ class Game:
         """
         return int(self.turn)
 
-    def place_piece(self, rack_idx : int, col_idx : int):
+    def place_piece(self, rack_idx: int, col_idx: int):
         """Function to place a new tile from the tiles on the letter rack
 
         Note: Scoring not yet implemented
@@ -118,6 +118,17 @@ class Game:
         return 1  # returns 1 error code for column full
 
     def __str__(self):
+        """Function to define string representation of Game object
+
+        The string representation displays the current board, 
+        letter rack, player scores, and turn
+
+        Note:
+            Currently defined for single player mode only
+
+        Return:
+            res (string): String representation of the attributes stated above
+        """
         # print board
         row_str = '+'
         for i in range(self.width):
