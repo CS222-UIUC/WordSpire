@@ -10,7 +10,7 @@ default_letter_values = {'A': 1, 'B': 3, 'C': 3, 'D': 2, 'E': 1, 'F': 4, 'G': 2,
 
 class Game:
     # all arguments have a defualt value but can be overwritten
-    def __init__(self, board_size=(7, 7), rack_size=7, letter_bag=default_letter_bag, letter_values=default_letter_values, mode="local_mult"):
+    def __init__(self, board_size: tuple[int, int] = (7, 7), rack_size: int = 7, letter_bag: list[str] = default_letter_bag, letter_values: dict[str, int] = default_letter_values, mode: str = "local_mult"):
         """Innitialization function
         Note: all arguments have a defualt value but can be overwritten
 
@@ -32,7 +32,8 @@ class Game:
                       for i in range(self.height)]
 
         # create random letter rack and
-        shuffled_letters = random.shuffle(letter_bag)
+        shuffled_letters = letter_bag
+        random.shuffle(shuffled_letters)
         self.rack_size = rack_size
         self.letter_bag = shuffled_letters[self.rack_size:]
         self.rack = shuffled_letters[0:self.rack_size]
@@ -41,7 +42,7 @@ class Game:
         self.mode = mode
         self.p1_score = 0
         self.p2_score = 0
-        self.turn = True
+        self.turn = False
 
     def get_board(self):
         """Board getter function
@@ -75,7 +76,7 @@ class Game:
         """
         return int(self.turn)
 
-    def place_piece(self, rack_idx, col_idx):
+    def place_piece(self, rack_idx: int, col_idx: int):
         """Function to place a new tile from the tiles on the letter rack
 
         Note: Scoring not yet implemented
@@ -115,6 +116,41 @@ class Game:
                 return 0  # returns 0 as succeeded
 
         return 1  # returns 1 error code for column full
+
+    def __str__(self):
+        """Function to define string representation of Game object
+
+        The string representation displays the current board, 
+        letter rack, player scores, and turn
+
+        Note:
+            Currently defined for single player mode only
+
+        Return:
+            res (string): String representation of the attributes stated above
+        """
+        # print board
+        row_str = '+'
+        for i in range(self.width):
+            row_str += '-----+'
+
+        res = 'Board:\n\n' + row_str + '\n'
+        for i in range(self.height):
+            for j in range(self.width):
+                res += f'|  {self.board[i][j]}  '
+            res += f'|\n{row_str}\n'
+
+        # print letter rack
+        res += f'Letter Rack: {self.rack}\n\n'
+
+        # print scores
+        res += f'Player 1 Score: {self.p1_score}\n'
+        res += f'Player 2 Score: {self.p2_score}\n\n'
+
+        # print current player's turn
+        res += f'Player {self.turn + 1}\'s Turn\n\n'
+
+        return res
 
     # unused:
     # def get_col(self, col_idx):
