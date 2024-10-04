@@ -32,7 +32,8 @@ class Game:
                       for i in range(self.height)]
 
         # create random letter rack and
-        shuffled_letters = random.shuffle(letter_bag)
+        shuffled_letters = letter_bag
+        random.shuffle(shuffled_letters)
         self.rack_size = rack_size
         self.letter_bag = shuffled_letters[self.rack_size:]
         self.rack = shuffled_letters[0:self.rack_size]
@@ -41,7 +42,7 @@ class Game:
         self.mode = mode
         self.p1_score = 0
         self.p2_score = 0
-        self.turn = True
+        self.turn = False
 
     def get_board(self):
         """Board getter function
@@ -115,6 +116,30 @@ class Game:
                 return 0  # returns 0 as succeeded
 
         return 1  # returns 1 error code for column full
+
+    def __str__(self):
+        # print board
+        row_str = '+'
+        for i in range(self.width):
+            row_str += '-----+'
+
+        res = 'Board:\n\n' + row_str + '\n'
+        for i in range(self.height):
+            for j in range(self.width):
+                res += f'|  {self.board[i][j]}  '
+            res += f'|\n{row_str}\n'
+
+        # print letter rack
+        res += f'Letter Rack: {self.rack}\n\n'
+
+        # print scores
+        res += f'Player 1 Score: {self.p1_score}\n'
+        res += f'Player 2 Score: {self.p2_score}\n\n'
+
+        # print current player's turn
+        res += f'Player {self.turn + 1}\'s Turn\n\n'
+
+        return res
 
     # unused:
     # def get_col(self, col_idx):
