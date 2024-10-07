@@ -1,4 +1,7 @@
 import random
+from PyDictionary import PyDictionary
+import contextlib
+import io
 
 # default letters and their value
 default_letter_bag = ["A", "A", "A", "A", "A", "A", "A", "A", "A", "B", "B", "C", "C", "D", "D", "D", "D", "E", "E", "E", "E", "E", "E", "E", "E", "E", "E", "E", "E", "F", "F", "G", "G", "G", "H", "H", "I", "I", "I", "I", "I", "I", "I", "I", "I", "J", "K",
@@ -10,7 +13,7 @@ default_letter_values = {'A': 1, 'B': 3, 'C': 3, 'D': 2, 'E': 1, 'F': 4, 'G': 2,
 
 class Game:
     # all arguments have a defualt value but can be overwritten
-    def __init__(self, board_size: tuple[int, int] = (7, 7), rack_size: int = 7, letter_bag: list[str] = default_letter_bag, letter_values: dict[str, int] = default_letter_values, mode: str = "local_mult"):
+    def __init__(self, board_size: tuple[int, int] = (7, 7), rack_size: int = 7, letter_bag: list[str] = default_letter_bag, letter_values: dict[str, int] = default_letter_values, mode: str = "local_mult", min_word_length: int = 4):
         """
         Innitialization function
         Note: all arguments have a defualt value but can be overwritten
@@ -30,7 +33,7 @@ class Game:
         self.width = board_size[1]
         self.height = board_size[0]
         self.board = [["*" for i in range(self.width)]
-                      for i in range(self.height)]
+                      for z in range(self.height)]
 
         # create random letter rack and shuffle letter bag
         shuffled_letters = letter_bag
@@ -41,9 +44,12 @@ class Game:
 
         # other misc info
         self.mode = mode
+        self.min_word_length = min_word_length
         self.p1_score = 0
         self.p2_score = 0
         self.turn = False
+        self.dict = PyDictionary()
+        self.score_dict = letter_values
 
     def get_board(self):
         """
@@ -100,7 +106,7 @@ class Game:
             return 3
 
         # main placement loop
-        for row in self.board[::-1]:
+        for row_idx, row in enumerate(self.board):
 
             # find lowest empty point in col
             if row[col_idx] == "*":
@@ -113,7 +119,10 @@ class Game:
                 self.letter_bag.pop()
 
                 # score
-                # to-do
+                if self.turn:
+                    self.p2_score += self.score_loc(row_idx, col_idx)
+                else:
+                    self.p1_score += self.score_loc(row_idx, col_idx)
 
                 # change_turn
                 if self.mode == "local_mult" or self.mode == "online_mult":
@@ -122,6 +131,52 @@ class Game:
                 return 0  # returns 0 as succeeded
 
         return 1  # returns 1 error code for column full
+    
+    def score_words(self, letters : list, key_idx : int, min_len : int):
+        score = 0
+        max_idx = len(letters)
+
+        # used to silence potential error
+        trash = io.StringIO()
+        with contextlib.redirect_stdout(trash):
+            for length in range(min_len, max_idx + 1):
+                for start in range(max(key_idx - length + 1, 0), min(key_idx, max_idx - length) + 1):
+                    potential_word = "".join(letters[start : start + length])
+
+                    #forward
+                    if not '*' in potential_word and self.dict.meaning(potential_word):
+                        for letter in potential_word:
+                            score += self.score_dict[letter]
+                        
+                    #backward
+                    potential_word = potential_word[::-1]
+                    if not '*' in potential_word and self.dict.meaning(potential_word):
+                        for letter in potential_word:
+                            score += self.score_dict[letter]
+        
+        return score
+
+    def score_loc(self, row_idx: int, col_idx: int):
+        score = 0
+        
+        #horizontal words
+        row = self.board[row_idx]
+        score += self.score_words(row, col_idx, self.min_word_length)
+
+        #vertical words
+        row = [i[col_idx] for i in self.board]
+        score += self.score_words(row, row_idx, self.min_word_length)
+
+        #up-right words
+        main_diagonal = [self.board[row_idx + i][col_idx + i] for i in range(max(0 - row_idx, 0 - col_idx), min(self.height - row_idx, self.width - col_idx))]
+        score += self.score_words(main_diagonal, min(row_idx, col_idx), self.min_word_length)
+
+        #up-left words
+        anti_diagonal = [self.board[row_idx + i][col_idx - i] for i in range(max(0 - row_idx, col_idx - self.width + 1), min(self.height - row_idx, col_idx + 1))]
+        score += self.score_words(anti_diagonal, min(row_idx, self.height - col_idx - 1), self.min_word_length)
+
+        return score
+
 
     def get_game_state(self):
         """
@@ -133,7 +188,7 @@ class Game:
 
         # check for available columns
         for col in range(self.width):
-            if self.board[0][col] == '*' and self.letter_bag:
+            if self.board[-1][col] == '*' and self.letter_bag:
                 return 0
 
         # determine game result
@@ -154,7 +209,7 @@ class Game:
 
         available_columns = []
         for i in range(self.width):
-            if self.board[0][i] == '*':
+            if self.board[-1][i] == '*':
                 available_columns.append(i)
 
         return available_columns
@@ -178,7 +233,7 @@ class Game:
             row_str += '-----+'
 
         res = 'Board:\n\n' + row_str + '\n'
-        for i in range(self.height):
+        for i in range(self.height - 1, -1, -1):
             for j in range(self.width):
                 res += f'|  {self.board[i][j]}  '
             res += f'|\n{row_str}\n'
