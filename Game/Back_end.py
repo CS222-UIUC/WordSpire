@@ -103,7 +103,6 @@ class Game:
         """
         Function to place a new tile from the tiles on the letter rack
 
-        Note: Scoring not yet implemented
             rack_idx (int): an int between 0 and rack_size
             col_idx (int): an int between 0 and board_width
 
@@ -145,27 +144,53 @@ class Game:
         return 1  # returns 1 error code for column full
 
     def score_list(self, letters: list, key_idx: int, min_len: int):
+        """
+        Scores all valid words in a single row/list of characters
+
+            letters (list): list of upercase letters in a row
+            key_idx: (int): index of letter required to be in word
+            min_len (int): minimum length words to score
+
+        Return:
+            score (int): number of points for all found words
+        """
+        
+        #initialize basic variables
         score = 0
         max_idx = len(letters)
 
-        for length in range(min_len, max_idx + 1):
-            for start in range(max(key_idx - length + 1, 0), min(key_idx, max_idx - length) + 1):
+        for length in range(min_len, max_idx + 1): #loop over lengths of words
+            for start in range(max(key_idx - length + 1, 0), min(key_idx, max_idx - length) + 1): #valid places to find word
                 potential_word = "".join(letters[start: start + length])
 
                 # forward
                 if not '*' in potential_word and potential_word in self.dict:
+                    
+                    #score per letter in word
                     for letter in potential_word:
                         score += self.score_dict[letter]
 
                 # backward
                 potential_word = potential_word[::-1]
                 if not '*' in potential_word and potential_word in self.dict:
+                    
+                    #score per letter in word
                     for letter in potential_word:
                         score += self.score_dict[letter]
 
         return score
 
     def score_loc(self, row_idx: int, col_idx: int):
+        """
+        Scores a move that places a tile
+
+            row_idx (int): an int between 0 and board_height giving the row in which a piece was placed
+            col_idx (int): an int between 0 and board_width giving the col in which a piece was palced
+
+        Return:
+            status_code (int): 0 if successful, 1 if column is full, 2 if outside board, 3 if outside rack 
+        """
+
         score = 0
 
         # horizontal words
