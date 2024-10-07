@@ -21,7 +21,7 @@ while game_state == 0:
 
     print(game_instance)
 
-    game_state = game_instance.game_state()
+    game_state = game_instance.get_game_state()
 
 if game_state == 1:
     print('Player 1 wins.')

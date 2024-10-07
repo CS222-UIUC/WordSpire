@@ -38,7 +38,6 @@ class Game:
         self.rack_size = rack_size
         self.letter_bag = shuffled_letters[self.rack_size:]
         self.rack = shuffled_letters[0:self.rack_size]
-        self.bag_index = 0
 
         # other misc info
         self.mode = mode
@@ -110,8 +109,8 @@ class Game:
                 row[col_idx] = self.rack[rack_idx]
 
                 # refill letter rack
-                self.rack[rack_idx] = self.letter_bag[self.bag_index]
-                self.bag_index += 1
+                self.rack[rack_idx] = self.letter_bag[-1]
+                self.letter_bag.pop()
 
                 # score
                 # to-do
@@ -134,7 +133,7 @@ class Game:
 
         # check for available columns
         for col in range(self.width):
-            if self.board[0][col] == '*' and self.bag_index < len(self.letter_bag):
+            if self.board[0][col] == '*' and self.letter_bag:
                 return 0
 
         # determine game result
