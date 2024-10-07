@@ -11,7 +11,8 @@ default_letter_values = {'A': 1, 'B': 3, 'C': 3, 'D': 2, 'E': 1, 'F': 4, 'G': 2,
 class Game:
     # all arguments have a defualt value but can be overwritten
     def __init__(self, board_size: tuple[int, int] = (7, 7), rack_size: int = 7, letter_bag: list[str] = default_letter_bag, letter_values: dict[str, int] = default_letter_values, mode: str = "local_mult"):
-        """Innitialization function
+        """
+        Innitialization function
         Note: all arguments have a defualt value but can be overwritten
 
         Args:
@@ -31,12 +32,13 @@ class Game:
         self.board = [["*" for i in range(self.width)]
                       for i in range(self.height)]
 
-        # create random letter rack and
+        # create random letter rack and shuffle letter bag
         shuffled_letters = letter_bag
         random.shuffle(shuffled_letters)
         self.rack_size = rack_size
         self.letter_bag = shuffled_letters[self.rack_size:]
         self.rack = shuffled_letters[0:self.rack_size]
+        self.bag_index = 0
 
         # other misc info
         self.mode = mode
@@ -45,7 +47,8 @@ class Game:
         self.turn = False
 
     def get_board(self):
-        """Board getter function
+        """
+        Board getter function
 
         Return:
             board (2D-list): 2D array of strings representing the board
@@ -53,7 +56,8 @@ class Game:
         return self.board
 
     def get_rack(self):
-        """Rack getter function
+        """
+        Rack getter function
 
         Return:
             rack (list): list of strings representing current letters on the rack
@@ -61,7 +65,8 @@ class Game:
         return self.rack
 
     def get_scores(self):
-        """Score getter function
+        """
+        Score getter function
 
         Return:
             score (tuple[2]): tuple of length 2 containing score of player 1 and player 2 respectively
@@ -69,7 +74,8 @@ class Game:
         return (self.p1_score, self.p2_score)
 
     def get_turn(self):
-        """Turn getter function
+        """
+        Turn getter function
 
         Return:
             turn (int): 0 if player 1, 1 if player 2, in single player always 0
@@ -77,7 +83,8 @@ class Game:
         return int(self.turn)
 
     def place_piece(self, rack_idx: int, col_idx: int):
-        """Function to place a new tile from the tiles on the letter rack
+        """
+        Function to place a new tile from the tiles on the letter rack
 
         Note: Scoring not yet implemented
             rack_idx (int): an int between 0 and rack_size
@@ -103,8 +110,8 @@ class Game:
                 row[col_idx] = self.rack[rack_idx]
 
                 # refill letter rack
-                self.rack[rack_idx] = self.letter_bag[0]
-                self.letter_bag = self.letter_bag[1:]
+                self.rack[rack_idx] = self.letter_bag[self.bag_index]
+                self.bag_index += 1
 
                 # score
                 # to-do
@@ -117,8 +124,34 @@ class Game:
 
         return 1  # returns 1 error code for column full
 
+    def game_state(self):
+        """
+        Function to determine the current state of the game
+
+        Return:
+            (int): 0 if game is not over, 1 if player 1 wins, 2 if player 2 wins, 3 if tie
+        """
+
+        # check if letter_bag has remaining letters
+        if self.bag_index < len(self.letter_bag):
+            return 0
+
+        # check for available columns
+        for col in range(self.width):
+            if self.board[0][col] == '*':
+                return 0
+
+        # determine game result
+        if self.p1_score > self.p2_score:
+            return 1
+        elif self.p2_score > self.p1_score:
+            return 2
+
+        return 3
+
     def __str__(self):
-        """Function to define string representation of Game object
+        """
+        Function to define string representation of Game object
 
         The string representation displays the current board, 
         letter rack, player scores, and turn
@@ -140,11 +173,21 @@ class Game:
                 res += f'|  {self.board[i][j]}  '
             res += f'|\n{row_str}\n'
 
+        # print column labels
+        res += '   '
+        for i in range(self.width):
+            res += f'{i + 1}     '
+
         # print letter rack
-        res += f'Letter Rack: {self.rack}\n\n'
+        res += f'\n\nLetter Rack:     {self.rack}\n'
+
+        # print letter rack indicies
+        res += 'Rack Indicies:     '
+        for i in range(self.rack_size):
+            res += f'{i + 1}    '
 
         # print scores
-        res += f'Player 1 Score: {self.p1_score}\n'
+        res += f'\n\nPlayer 1 Score: {self.p1_score}\n'
         res += f'Player 2 Score: {self.p2_score}\n\n'
 
         # print current player's turn
