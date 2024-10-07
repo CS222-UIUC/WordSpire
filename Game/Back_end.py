@@ -132,7 +132,7 @@ class Game:
 
         return 1  # returns 1 error code for column full
     
-    def score_words(self, letters : list, key_idx : int, min_len : int):
+    def score_list(self, letters : list, key_idx : int, min_len : int):
         score = 0
         max_idx = len(letters)
 
@@ -161,19 +161,19 @@ class Game:
         
         #horizontal words
         row = self.board[row_idx]
-        score += self.score_words(row, col_idx, self.min_word_length)
+        score += self.score_list(row, col_idx, self.min_word_length)
 
         #vertical words
         row = [i[col_idx] for i in self.board]
-        score += self.score_words(row, row_idx, self.min_word_length)
+        score += self.score_list(row, row_idx, self.min_word_length)
 
         #up-right words
         main_diagonal = [self.board[row_idx + i][col_idx + i] for i in range(max(0 - row_idx, 0 - col_idx), min(self.height - row_idx, self.width - col_idx))]
-        score += self.score_words(main_diagonal, min(row_idx, col_idx), self.min_word_length)
+        score += self.score_list(main_diagonal, min(row_idx, col_idx), self.min_word_length)
 
         #up-left words
         anti_diagonal = [self.board[row_idx + i][col_idx - i] for i in range(max(0 - row_idx, col_idx - self.width + 1), min(self.height - row_idx, col_idx + 1))]
-        score += self.score_words(anti_diagonal, min(row_idx, self.height - col_idx - 1), self.min_word_length)
+        score += self.score_list(anti_diagonal, min(row_idx, self.height - col_idx - 1), self.min_word_length)
 
         return score
 
