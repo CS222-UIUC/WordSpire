@@ -2,12 +2,13 @@ import sys
 import os
 import random
 
+
 sys.path.append(os.path.abspath(os.path.join(
     os.path.dirname(__file__), '../Game')))
 
 from Back_end import *  # noqa
 
-game_instance = Game(min_word_length = 3)
+game_instance = Game(min_word_length = 4)
 print(game_instance)
 
 game_state = 0

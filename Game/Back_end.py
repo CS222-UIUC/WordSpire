@@ -1,7 +1,7 @@
 import random
-from PyDictionary import PyDictionary
 import contextlib
 import io
+import os
 
 # default letters and their value
 default_letter_bag = ["A", "A", "A", "A", "A", "A", "A", "A", "A", "B", "B", "C", "C", "D", "D", "D", "D", "E", "E", "E", "E", "E", "E", "E", "E", "E", "E", "E", "E", "F", "F", "G", "G", "G", "H", "H", "I", "I", "I", "I", "I", "I", "I", "I", "I", "J", "K",
@@ -10,10 +10,22 @@ default_letter_values = {'A': 1, 'B': 3, 'C': 3, 'D': 2, 'E': 1, 'F': 4, 'G': 2,
                          'J': 8, 'K': 5, 'L': 1, 'M': 3, 'N': 1, 'O': 1, 'P': 3, 'Q': 10, 'R': 1,
                          'S': 1, 'T': 1, 'U': 1, 'V': 4, 'W': 4, 'X': 8, 'Y': 4, 'Z': 10}
 
+# get word dictionary
+new_path = os.path.join(os.path.dirname(__file__), '..', 'misc', 'Collins Scrabble Words (2019) with definitions.txt')
+default_word_dictionary = {}
+# open the file in read mode
+with open(new_path, 'r') as file:
+    # read lines from the file into the dictionary
+    for line in file.readlines():
+        key, value = line.strip().split('	')
+        default_word_dictionary[key.strip()] = value.strip()
+
 
 class Game:
     # all arguments have a defualt value but can be overwritten
-    def __init__(self, board_size: tuple[int, int] = (7, 7), rack_size: int = 7, letter_bag: list[str] = default_letter_bag, letter_values: dict[str, int] = default_letter_values, mode: str = "local_mult", min_word_length: int = 4):
+    def __init__(self, board_size: tuple[int, int] = (7, 7), rack_size: int = 7,
+                 letter_bag: list[str] = default_letter_bag, letter_values: dict[str, int] = default_letter_values,
+                 word_dictionary: dict[str, str] = default_word_dictionary, mode: str = "local_mult", min_word_length: int = 4):
         """
         Innitialization function
         Note: all arguments have a defualt value but can be overwritten
@@ -48,7 +60,7 @@ class Game:
         self.p1_score = 0
         self.p2_score = 0
         self.turn = False
-        self.dict = PyDictionary()
+        self.dict = word_dictionary
         self.score_dict = letter_values
 
     def get_board(self):
@@ -131,52 +143,52 @@ class Game:
                 return 0  # returns 0 as succeeded
 
         return 1  # returns 1 error code for column full
-    
-    def score_list(self, letters : list, key_idx : int, min_len : int):
+
+    def score_list(self, letters: list, key_idx: int, min_len: int):
         score = 0
         max_idx = len(letters)
 
-        # used to silence potential error
-        trash = io.StringIO()
-        with contextlib.redirect_stdout(trash):
-            for length in range(min_len, max_idx + 1):
-                for start in range(max(key_idx - length + 1, 0), min(key_idx, max_idx - length) + 1):
-                    potential_word = "".join(letters[start : start + length])
+        for length in range(min_len, max_idx + 1):
+            for start in range(max(key_idx - length + 1, 0), min(key_idx, max_idx - length) + 1):
+                potential_word = "".join(letters[start: start + length])
 
-                    #forward
-                    if not '*' in potential_word and self.dict.meaning(potential_word):
-                        for letter in potential_word:
-                            score += self.score_dict[letter]
-                        
-                    #backward
-                    potential_word = potential_word[::-1]
-                    if not '*' in potential_word and self.dict.meaning(potential_word):
-                        for letter in potential_word:
-                            score += self.score_dict[letter]
-        
+                # forward
+                if not '*' in potential_word and potential_word in self.dict:
+                    for letter in potential_word:
+                        score += self.score_dict[letter]
+
+                # backward
+                potential_word = potential_word[::-1]
+                if not '*' in potential_word and potential_word in self.dict:
+                    for letter in potential_word:
+                        score += self.score_dict[letter]
+
         return score
 
     def score_loc(self, row_idx: int, col_idx: int):
         score = 0
-        
-        #horizontal words
+
+        # horizontal words
         row = self.board[row_idx]
         score += self.score_list(row, col_idx, self.min_word_length)
 
-        #vertical words
+        # vertical words
         row = [i[col_idx] for i in self.board]
         score += self.score_list(row, row_idx, self.min_word_length)
 
-        #up-right words
-        main_diagonal = [self.board[row_idx + i][col_idx + i] for i in range(max(0 - row_idx, 0 - col_idx), min(self.height - row_idx, self.width - col_idx))]
-        score += self.score_list(main_diagonal, min(row_idx, col_idx), self.min_word_length)
+        # up-right words
+        main_diagonal = [self.board[row_idx + i][col_idx + i] for i in range(
+            max(0 - row_idx, 0 - col_idx), min(self.height - row_idx, self.width - col_idx))]
+        score += self.score_list(main_diagonal,
+                                 min(row_idx, col_idx), self.min_word_length)
 
-        #up-left words
-        anti_diagonal = [self.board[row_idx + i][col_idx - i] for i in range(max(0 - row_idx, col_idx - self.width + 1), min(self.height - row_idx, col_idx + 1))]
-        score += self.score_list(anti_diagonal, min(row_idx, self.height - col_idx - 1), self.min_word_length)
+        # up-left words
+        anti_diagonal = [self.board[row_idx + i][col_idx - i] for i in range(max(
+            0 - row_idx, col_idx - self.width + 1), min(self.height - row_idx, col_idx + 1))]
+        score += self.score_list(anti_diagonal, min(row_idx,
+                                 self.height - col_idx - 1), self.min_word_length)
 
         return score
-
 
     def get_game_state(self):
         """
