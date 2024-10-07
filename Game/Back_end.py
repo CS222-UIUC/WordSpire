@@ -124,7 +124,7 @@ class Game:
 
         return 1  # returns 1 error code for column full
 
-    def game_state(self):
+    def get_game_state(self):
         """
         Function to determine the current state of the game
 
@@ -132,13 +132,9 @@ class Game:
             (int): 0 if game is not over, 1 if player 1 wins, 2 if player 2 wins, 3 if tie
         """
 
-        # check if letter_bag has remaining letters
-        if self.bag_index < len(self.letter_bag):
-            return 0
-
         # check for available columns
         for col in range(self.width):
-            if self.board[0][col] == '*':
+            if self.board[0][col] == '*' and self.bag_index < len(self.letter_bag):
                 return 0
 
         # determine game result
@@ -149,6 +145,21 @@ class Game:
 
         return 3
 
+    def get_available_columns(self):
+        """
+        Function to aquire available columns for dropping letters
+
+        Return:
+            available_columns (List[int]): list of available columns (0-indexed)
+        """
+
+        available_columns = []
+        for i in range(self.width):
+            if self.board[0][i] == '*':
+                available_columns.append(i)
+
+        return available_columns
+
     def __str__(self):
         """
         Function to define string representation of Game object
@@ -157,7 +168,7 @@ class Game:
         letter rack, player scores, and turn
 
         Note:
-            Currently defined for single player mode only
+            Currently defined for multiplayer mode
 
         Return:
             res (string): String representation of the attributes stated above
