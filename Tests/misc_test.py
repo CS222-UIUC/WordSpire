@@ -14,17 +14,15 @@ from Back_end import *  # noqa
 
 game_instance = Game()
 
-#test speed/see what is slowest
+# test speed/see what is slowest
 # pr = cProfile.Profile()
 # pr.enable()
 
 print(game_instance)
-game_instance.score_loc(4,3)
+game_instance.score_loc(4, 3)
 
 
 # pr.disable()
 # pr.dump_stats('misc/stats')
 # p = pstats.Stats('misc/stats')
 # p.strip_dirs().sort_stats(SortKey.TIME).print_stats(20)
-
-

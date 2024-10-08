@@ -11,7 +11,7 @@ default_letter_values = {'A': 1, 'B': 3, 'C': 3, 'D': 2, 'E': 1, 'F': 4, 'G': 2,
                          'S': 1, 'T': 1, 'U': 1, 'V': 4, 'W': 4, 'X': 8, 'Y': 4, 'Z': 10}
 
 # get word dictionary
-new_path = os.path.join(os.path.dirname(__file__), '..', 'misc', 'Collins Scrabble Words (2019) with definitions.txt')
+new_path = os.path.join(os.path.dirname(__file__), '..', 'misc', 'Collins Scrabble Words (2019) with definitions.txt')  # noqa
 default_word_dictionary = {}
 # open the file in read mode
 with open(new_path, 'r') as file:
@@ -154,27 +154,30 @@ class Game:
         Return:
             score (int): number of points for all found words
         """
-        
-        #initialize basic variables
+
+        # initialize basic variables
         score = 0
         max_idx = len(letters)
 
-        for length in range(min_len, max_idx + 1): #loop over lengths of words
-            for start in range(max(key_idx - length + 1, 0), min(key_idx, max_idx - length) + 1): #valid places to find word
+        for length in range(min_len, max_idx + 1):  # loop over lengths of words
+            # valid places to find word
+            for start in range(max(key_idx - length + 1, 0), min(key_idx, max_idx - length) + 1):
                 potential_word = "".join(letters[start: start + length])
 
                 # forward
                 if not '*' in potential_word and potential_word in self.dict:
-                    
-                    #score per letter in word
+                    print(potential_word)
+                    print(self.dict[potential_word])
+                    # score per letter in word
                     for letter in potential_word:
                         score += self.score_dict[letter]
 
                 # backward
                 potential_word = potential_word[::-1]
                 if not '*' in potential_word and potential_word in self.dict:
-                    
-                    #score per letter in word
+                    print(potential_word)
+                    print(self.dict[potential_word])
+                    # score per letter in word
                     for letter in potential_word:
                         score += self.score_dict[letter]
 
@@ -198,8 +201,8 @@ class Game:
         score += self.score_list(row, col_idx, self.min_word_length)
 
         # vertical words
-        row = [i[col_idx] for i in self.board]
-        score += self.score_list(row, row_idx, self.min_word_length)
+        col = [row[col_idx] for row in self.board]
+        score += self.score_list(col, row_idx, self.min_word_length)
 
         # up-right words
         main_diagonal = [self.board[row_idx + i][col_idx + i] for i in range(
@@ -211,7 +214,7 @@ class Game:
         anti_diagonal = [self.board[row_idx + i][col_idx - i] for i in range(max(
             0 - row_idx, col_idx - self.width + 1), min(self.height - row_idx, col_idx + 1))]
         score += self.score_list(anti_diagonal, min(row_idx,
-                                 self.height - col_idx - 1), self.min_word_length)
+                                 self.width - col_idx - 1), self.min_word_length)
 
         return score
 
