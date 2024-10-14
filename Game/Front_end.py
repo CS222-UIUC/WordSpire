@@ -9,6 +9,8 @@ BLUE = (0, 0, 255)
 BLACK = (0, 0, 0)
 RED = (255, 0, 0)
 YELLOW = (255, 255, 0)
+WHITE = (255, 255, 255)
+GREEN = (0, 255, 0)
 
 # Create game object and get board info
 curr_game = Back_end.Game()
@@ -51,13 +53,36 @@ def draw_board(board):
                     pygame.draw.rect(screen, YELLOW, (column * square_size + 10, height - (row + 1) * square_size + 10, square_size - 20, square_size - 20))
     pygame.display.update()
 
+def display_start_menu():
+    # Cover game screen to dispay the menu
+    font = pygame.font.Font('freesansbold.ttf', 32)
+    text = font.render("WordSpire", True, WHITE)
+    textRect = text.get_rect()
+    textRect.center = (width / 2, height / 2 - 50)
+    screen.blit(text, textRect)
+
+    # Create Start button
+    button_font = pygame.font.Font('freesansbold.ttf', 28)
+    button_text = button_font.render("Start", True, BLACK)
+    button_rect = pygame.Rect(width / 2 - 60, height / 2 + 20, 120, 50)
+    pygame.draw.rect(screen, GREEN, button_rect)
+    button_text_rect = button_text.get_rect(center=button_rect.center)
+    screen.blit(button_text, button_text_rect)
+
+    pygame.display.update()
+    return button_rect
+
 # Draw the board
-draw_board(board)
 pygame.display.update()
 print_board(board)
+start_button_rect = display_start_menu()
+
+game_started = False
 
 #check to make sure the game is not over yet 
 while (game_over == 0): 
+    # display_start_menu()
+    screen.fill(BLACK)
     for event in pygame.event.get(): #any motion
         # Update board and turn number
         board = curr_game.get_board()
@@ -65,7 +90,18 @@ while (game_over == 0):
 
         if event.type == pygame.QUIT: #user can exit if needed
             sys.exit()
+        if not game_started:
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                mouse_pos = event.pos
+                if start_button_rect.collidepoint(mouse_pos):
+                    game_started = True
+                    screen.fill(BLACK)
+                    draw_board(board)
+                    continue
+                continue
         if event.type == pygame.MOUSEBUTTONDOWN: #to place pieces
+            board = curr_game.get_board()
+            turn = curr_game.get_turn()
             # Ask for Player 1 input
             if turn == 0:
                 # letter_idx = int(input("Player 1, choose a letter index from your rack (0-6): ")) # Will change to select input from list of options
@@ -84,4 +120,5 @@ while (game_over == 0):
                 curr_game.place_piece(letter_idx, column)
 
             print_board(board)
-            draw_board(board)
+            if game_started:
+                draw_board(board)
