@@ -2,6 +2,8 @@ import pygame #https://www.pygame.org/docs/
 import numpy as np
 import sys
 import math
+import string
+import os
 import Back_end
 
 # Color definitions
@@ -11,6 +13,25 @@ RED = (255, 0, 0)
 YELLOW = (255, 255, 0)
 WHITE = (255, 255, 255)
 GREEN = (0, 255, 0)
+
+# Load tile images
+alphabet = list()
+tile_images = list()
+for letter in string.ascii_lowercase:
+    uc_letter = letter.upper()
+    alphabet.append(uc_letter)
+    file_name = os.path.join(os.path.dirname(__file__), '..', 'misc', 'scrabble_tiles', letter + '.png')
+    # Debugging: Print the file name being generated
+    print(f"Constructed file path for letter '{letter}': {file_name}")
+    
+    # Check if the file exists
+    if not os.path.exists(file_name):
+        print(f"Error: File does not exist at path '{file_name}'")
+    else:
+        print(f"File exists: {file_name}")
+    
+    tile_images.append(file_name)
+letter_dict = dict(zip(alphabet, tile_images))
 
 # Create game object and get board info
 curr_game = Back_end.Game()
@@ -47,10 +68,8 @@ def draw_board(board):
     for column in range(column_size):
         for row in range(row_size):
             if board[row][column] != "*":
-                if turn == 0: # Player 1 turn, red
-                    pygame.draw.rect(screen, RED, (column * square_size + 10, height - (row + 1) * square_size + 10, square_size - 20, square_size - 20))
-                else: # Player 2 turn, yellow
-                    pygame.draw.rect(screen, YELLOW, (column * square_size + 10, height - (row + 1) * square_size + 10, square_size - 20, square_size - 20))
+                tile_image = load_tile_image(board[row][column])
+                screen.blit(tile_image, (column * square_size + 10, height - (row + 1) * square_size + 10))
     pygame.display.update()
 
 def display_start_menu():
@@ -72,6 +91,42 @@ def display_start_menu():
     pygame.display.update()
     return button_rect
 
+def display_rack(curr_rack):
+    # TO BE FINISHED
+    # Currently places a tile in the center of the starting screen
+
+    first_letter = curr_rack[0]
+    
+    # Get the image path for the letter, handle if not found
+    image_path = letter_dict.get(first_letter)
+    if image_path is None:
+        print(f"Error: No image found for letter '{first_letter}'")
+        return
+
+    # Try to load and display the image if the path is valid
+    try:
+        first_letter_tile = pygame.image.load(image_path)  # Directly load the image using pygame.image.load()
+        first_letter_tile = pygame.transform.scale(first_letter_tile, (80, 80))
+        screen.blit(first_letter_tile, (width / 2 - 40, height / 2 - 40))
+        pygame.display.update()
+    except pygame.error as e:
+        print(f"Failed to load image for letter '{first_letter}': {e}")
+
+def load_tile_image(curr_letter):
+    curr_letter = curr_letter.upper()
+    image_path = letter_dict.get(curr_letter)
+    if image_path is None:
+        print(f"Error: No image found for letter '{curr_letter}'")
+        return
+
+    # Try to load and display the image if the path is valid
+    try:
+        curr_letter_tile = pygame.image.load(image_path)  # Directly load the image using pygame.image.load()
+        curr_letter_tile = pygame.transform.scale(curr_letter_tile, (80, 80))
+        return curr_letter_tile
+    except pygame.error as e:
+        print(f"Failed to load image for letter '{curr_letter}': {e}")
+
 # Draw the board
 pygame.display.update()
 print_board(board)
@@ -81,7 +136,6 @@ game_started = False
 
 #check to make sure the game is not over yet 
 while (game_over == 0): 
-    # display_start_menu()
     screen.fill(BLACK)
     for event in pygame.event.get(): #any motion
         # Update board and turn number
