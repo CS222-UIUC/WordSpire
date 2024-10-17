@@ -158,16 +158,14 @@ class Game:
         # initialize basic variables
         score = 0
         max_idx = len(letters)
+        ltrs_string = "".join(letters)
 
-        for length in range(min_len, max_idx + 1):  # loop over lengths of words
-            # valid places to find word
-            for start in range(max(key_idx - length + 1, 0), min(key_idx, max_idx - length) + 1):
-                potential_word = "".join(letters[start: start + length])
+        for start in range(0, max_idx - min_len):   # loop over possible start indices
+            for end in range(start + min_len, max_idx + 1):     # loop over possible end indices
+                potential_word = ltrs_string[start:end]
 
                 # forward
                 if not '*' in potential_word and potential_word in self.dict:
-                    print(potential_word)
-                    print(self.dict[potential_word])
                     # score per letter in word
                     for letter in potential_word:
                         score += self.score_dict[letter]
@@ -175,8 +173,6 @@ class Game:
                 # backward
                 potential_word = potential_word[::-1]
                 if not '*' in potential_word and potential_word in self.dict:
-                    print(potential_word)
-                    print(self.dict[potential_word])
                     # score per letter in word
                     for letter in potential_word:
                         score += self.score_dict[letter]
