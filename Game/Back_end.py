@@ -159,14 +159,10 @@ class Game:
         score = 0
         max_idx = len(letters)
         ltrs_string = "".join(letters)
-        empty_indices = [(ltr == '*') for ltr in letters]
 
         for start in range(0, max_idx - min_len):   # loop over possible start indices
-            for end in range(start + min_len, max_idx + 1):     # loop over possible end indices
-                # check if new index is empty
-                if empty_indices[end - 1]:
-                    break
-
+            # loop over possible end indices
+            for end in range(start + min_len, max_idx + 1):
                 potential_word = ltrs_string[start:end]
 
                 # forward
@@ -199,7 +195,7 @@ class Game:
 
         # horizontal words
         row = self.board[row_idx]
-        score += self.score_list(row, col_idx, self.min_word_length)
+        score += self.score_list(row[i:j], col_idx, self.min_word_length)
 
         # vertical words
         col = [row[col_idx] for row in self.board]

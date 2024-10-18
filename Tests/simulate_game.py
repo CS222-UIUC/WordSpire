@@ -19,7 +19,7 @@ num_games = 1000
 print_enable = 0
 
 for i in range(num_games):
-    game_instance = Game(min_word_length = 4)
+    game_instance = Game(min_word_length=4)
 
     if (print_enable):
         print(game_instance)
@@ -53,6 +53,3 @@ p = pstats.Stats('misc/stats_pre_change')
 p.strip_dirs().sort_stats(SortKey.TIME).print_stats(20)
 p = pstats.Stats('misc/stats_post_change')
 p.strip_dirs().sort_stats(SortKey.TIME).print_stats(20)
-
-
-
