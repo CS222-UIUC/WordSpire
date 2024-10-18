@@ -195,7 +195,7 @@ class Game:
 
         # horizontal words
         row = self.board[row_idx]
-        score += self.score_list(row[i:j], col_idx, self.min_word_length)
+        score += self.score_list(row, col_idx, self.min_word_length)
 
         # vertical words
         col = [row[col_idx] for row in self.board]
