@@ -126,8 +126,13 @@ class Game:
                 row[col_idx] = self.rack[rack_idx]
 
                 # refill letter rack
-                self.rack[rack_idx] = self.letter_bag[-1]
-                self.letter_bag.pop()
+                if self.letter_bag:
+                    self.rack[rack_idx] = self.letter_bag[-1]
+                    self.letter_bag.pop()
+                #if no letters left in letter bag
+                else:
+                    self.rack.pop(rack_idx)
+                    self.rack_size -= 1
 
                 # score
                 if self.turn:
@@ -293,11 +298,13 @@ class Game:
         Return:
             (int): 0 if game is not over, 1 if player 1 wins, 2 if player 2 wins, 3 if tie
         """
-
-        # check for available columns
-        for col in range(self.width):
-            if self.board[-1][col] == '*' and self.letter_bag:
-                return 0
+        
+        #check for remaingin tiles in tile rack
+        if self.rack_size != 0:
+            # check for available columns
+            for col in range(self.width):
+                if self.board[-1][col] == '*' and self.letter_bag:
+                    return 0
 
         # determine game result
         if self.p1_score > self.p2_score:
@@ -367,10 +374,3 @@ class Game:
         res += f'Player {self.turn + 1}\'s Turn\n\n'
 
         return res
-
-    # unused:
-    # def get_col(self, col_idx):
-    #     col = []
-    #     for row in self.board:
-    #         col.append(row[col_idx])
-    #     return col
