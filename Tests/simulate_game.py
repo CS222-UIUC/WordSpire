@@ -48,7 +48,7 @@ for i in range(num_games):
             print('Tie game.')
 
 pr.disable()
-pr.dump_stats('misc/stats_pre_change')
+pr.dump_stats('misc/stats_post_change')
 p = pstats.Stats('misc/stats_pre_change')
 p.strip_dirs().sort_stats(SortKey.TIME).print_stats(20)
 p = pstats.Stats('misc/stats_post_change')
