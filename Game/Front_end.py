@@ -13,6 +13,9 @@ RED = (255, 0, 0)
 YELLOW = (255, 255, 0)
 WHITE = (255, 255, 255)
 GREEN = (0, 255, 0)
+DARK_BROWN = (92, 64, 51)
+LIGHT_GRAY = (83, 83, 83)
+DARK_GRAY = (105, 105, 105)
 
 # Load tile images
 alphabet = list()
@@ -21,17 +24,13 @@ for letter in string.ascii_lowercase:
     uc_letter = letter.upper()
     alphabet.append(uc_letter)
     file_name = os.path.join(os.path.dirname(__file__), '..', 'misc', 'scrabble_tiles', letter + '.png')
-    # Debugging: Print the file name being generated
-    print(f"Constructed file path for letter '{letter}': {file_name}")
     
     # Check if the file exists
     if not os.path.exists(file_name):
         print(f"Error: File does not exist at path '{file_name}'")
-    else:
-        print(f"File exists: {file_name}")
     
     tile_images.append(file_name)
-letter_dict = dict(zip(alphabet, tile_images))
+letter_dict = dict(zip(alphabet, tile_images)) # Dictionary mapping letters to their tile_image pathnames
 
 # Create game object and get board info
 curr_game = Back_end.Game()
@@ -53,16 +52,28 @@ pygame.init()
 screen = pygame.display.set_mode(size) #gives the screen size of the game board
 
 def print_board(board):
+    """
+    Prints the current board state (used for debugging and proof-of-concept)
+
+    """
     print(np.flip(board, 0))
 
 def print_rack(rack):
+    """
+    Prints the current rack state (used for debugging and proof-of-concept)
+
+    """
     print(rack)
 
 def draw_board(board):
+    """
+    Function to draw the board
+
+    """
     for column in range(column_size):
         for row in range(row_size):
             # Draw board
-            pygame.draw.rect(screen, BLUE, (column * square_size, row * square_size + square_size, square_size, square_size))
+            pygame.draw.rect(screen, DARK_BROWN, (column * square_size, row * square_size + square_size, square_size, square_size))
             # Draw blank slots
             pygame.draw.rect(screen, BLACK, (column * square_size + 10, (row + 1) * square_size + 10, square_size - 20, square_size - 20))
     for column in range(column_size):
@@ -73,46 +84,98 @@ def draw_board(board):
     pygame.display.update()
 
 def display_start_menu():
-    # Cover game screen to dispay the menu
-    font = pygame.font.Font('freesansbold.ttf', 32)
+    """
+    Function to display the start menu
+
+    Return:
+        start_button_rect (pygame.rect.Rect): pygame object representing the start button's rectangle
+    """
+    
+    # Create title text
+    font = pygame.font.Font('freesansbold.ttf', 48)
     text = font.render("WordSpire", True, WHITE)
     textRect = text.get_rect()
     textRect.center = (width / 2, height / 2 - 50)
     screen.blit(text, textRect)
 
     # Create Start button
-    button_font = pygame.font.Font('freesansbold.ttf', 28)
-    button_text = button_font.render("Start", True, BLACK)
-    button_rect = pygame.Rect(width / 2 - 60, height / 2 + 20, 120, 50)
-    pygame.draw.rect(screen, GREEN, button_rect)
-    button_text_rect = button_text.get_rect(center=button_rect.center)
-    screen.blit(button_text, button_text_rect)
+    start_button_center = (width / 2 - 60, height / 2 + 20)
+    start_button_rect = create_text_button(start_button_center, message = "Start")
 
     pygame.display.update()
-    return button_rect
+    return start_button_rect
 
-def display_rack(curr_rack):
-    # TO BE FINISHED
-    # Currently places a tile in the center of the starting screen
+def display_rack(curr_rack, selected=False):
+    """
+    Function to display rack screen, including player turn, rack tiles, two buttons, and scores
 
-    first_letter = curr_rack[0]
-    
-    # Get the image path for the letter, handle if not found
-    image_path = letter_dict.get(first_letter)
-    if image_path is None:
-        print(f"Error: No image found for letter '{first_letter}'")
-        return
+        curr_rack (list): Array of strings representing the rack
+        selected (bool): Boolean stating whether a tile has been selected (Default is False)
 
-    # Try to load and display the image if the path is valid
-    try:
-        first_letter_tile = pygame.image.load(image_path)  # Directly load the image using pygame.image.load()
-        first_letter_tile = pygame.transform.scale(first_letter_tile, (80, 80))
-        screen.blit(first_letter_tile, (width / 2 - 40, height / 2 - 40))
-        pygame.display.update()
-    except pygame.error as e:
-        print(f"Failed to load image for letter '{first_letter}': {e}")
+    Return:
+        rack_menu_buttons (list): Array of pygame.rect.Rect objects for text buttons and
+                                  tuples containing (image button, rack index)
+    """
+    # Returns a list of buttons starting with 'View Board', then 'Select Tile', then the letter tiles
+
+    # Display player turn
+    font = pygame.font.Font('freesansbold.ttf', 48)
+    if curr_game.get_turn():
+        text = font.render("Player 2's Turn", True, WHITE)
+    else:
+        text = font.render("Player 1's Turn", True, WHITE)
+    text_rect = text.get_rect()
+    text_rect.center = (width / 2, 200)
+    screen.blit(text, text_rect)
+
+    # Display player score
+    font = pygame.font.Font('freesansbold.ttf', 24)
+    p1_score, p2_score = curr_game.get_scores()
+    p1_msg = "Player 1 Score: " + str(p1_score)
+    p2_msg = "Player 2 Score: " + str(p2_score)
+    p1_text = font.render(p1_msg, True, WHITE)
+    p2_text = font.render(p2_msg, True, WHITE)
+    p1_rect = p1_text.get_rect()
+    p2_rect = p2_text.get_rect()
+    p1_rect.center = (width / 4 - 50, height - 30)
+    p2_rect.center = (3 * width / 4 + 50, height - 30)
+    screen.blit(p1_text, p1_rect)
+    screen.blit(p2_text, p2_rect)
+
+    rack_menu_buttons = []
+
+    # Display a button that allows you to go back to board
+    view_board_button_center = (width / 2 - 60, height / 2 + 200)
+    view_board_button_rect = create_text_button(view_board_button_center, "View Board", 16)
+    rack_menu_buttons.append(view_board_button_rect)
+
+    # Display a 'Select Tile' button
+    if not selected:
+        place_button_center = (width / 2 - 60, height / 2 + 120)
+        place_button_rect = create_text_button(place_button_center, "Select Tile", 16, LIGHT_GRAY, DARK_GRAY)
+        rack_menu_buttons.append(place_button_rect)
+    else:
+        place_button_center = (width / 2 - 60, height / 2 + 120)
+        place_button_rect = create_text_button(place_button_center, "Select Tile", 16)
+        rack_menu_buttons.append(place_button_rect)
+
+    # Load and display images for tiles
+    for i, letter in enumerate(curr_rack):
+        tile_image = load_tile_image(letter)
+        tile_rect = tile_image.get_rect(topleft=(i * 100 + 10, height / 2 - 40))  # Adjust position as needed
+        screen.blit(tile_image, tile_rect)
+        rack_menu_buttons.append((tile_rect, i))  # Store the rect with the index
+
+    pygame.display.update()
+    return rack_menu_buttons
 
 def load_tile_image(curr_letter):
+    """
+    Function to load a tile image path
+
+        curr_letter (string): Letter for the tile image to load
+    """
+    # Get image path
     curr_letter = curr_letter.upper()
     image_path = letter_dict.get(curr_letter)
     if image_path is None:
@@ -127,12 +190,70 @@ def load_tile_image(curr_letter):
     except pygame.error as e:
         print(f"Failed to load image for letter '{curr_letter}': {e}")
 
+def display_pause_menu():
+    """
+    Function to display the pause menu
+
+    Return:
+        resume_button_rect (pygame.rect.Rect): pygame object representing the resume text button box
+        options_button_rect (pygame.rect.Rect): pygame object representing the options text button box
+    """
+    # Display Pause Menu
+    font = pygame.font.Font('freesansbold.ttf', 32)
+    text = font.render("Game Paused", True, WHITE)
+    textRect = text.get_rect()
+    textRect.center = (width / 2, height / 2 - 100)
+    screen.blit(text, textRect)
+
+    # Create Resume button
+    resume_button_center = (width / 2 - 60, height / 2)
+    resume_button_rect = create_text_button(resume_button_center, "Resume", 26)
+
+    # Create Options button
+    options_button_center = (width / 2 - 60, height / 2 + 70)
+    options_button_rect = create_text_button(options_button_center, "Options", 26)
+
+    pygame.display.update()
+    return resume_button_rect, options_button_rect
+
+def create_text_button(location, message="", font_size=28, text_color=BLACK, button_color=GREEN):
+    """
+    Function that creates and returns a text button object
+
+        location (tuple[int, int]): x and y location for the center of the button, defined from top left corner
+        message (string): string message to be displayed inside the button
+        font_size (int): 
+        text_color (tuple[int, int, int]): takes a pre-determined color for the button's text
+        button_color (tuple[int, int, int]): takes a pre-determined color for the button itself
+
+    Return:
+        button_rect (pygame.rect.Rect): pygame object representing the text button created
+    """
+    # Define center for the button
+    x = location[0]
+    y = location[1]
+
+    # Create button object
+    button_font = pygame.font.Font('freesansbold.ttf', font_size)
+    button_text = button_font.render(message, True, text_color)
+    button_rect = pygame.Rect(x, y, 120, 50)
+    pygame.draw.rect(screen, button_color, button_rect, width=0, border_radius=10)
+    button_text_rect = button_text.get_rect(center=button_rect.center)
+    screen.blit(button_text, button_text_rect)
+    return button_rect
+
 # Draw the board
 pygame.display.update()
 print_board(board)
 start_button_rect = display_start_menu()
 
 game_started = False
+paused = False
+showing_rack = False
+selected = False
+selected_idx = -1
+tmp_selected = False
+tmp_selected_idx = -1
 
 #check to make sure the game is not over yet 
 while (game_over == 0): 
@@ -144,7 +265,7 @@ while (game_over == 0):
 
         if event.type == pygame.QUIT: #user can exit if needed
             sys.exit()
-        if not game_started:
+        if not game_started:  # Display starting menu
             if event.type == pygame.MOUSEBUTTONDOWN:
                 mouse_pos = event.pos
                 if start_button_rect.collidepoint(mouse_pos):
@@ -153,26 +274,74 @@ while (game_over == 0):
                     draw_board(board)
                     continue
                 continue
-        if event.type == pygame.MOUSEBUTTONDOWN: #to place pieces
+        if game_started and event.type == pygame.KEYDOWN:  # Go into pause menu
+            if event.key == pygame.K_p:
+                paused = True
+                resume_button_rect, options_button_rect = display_pause_menu()
+            elif event.key == pygame.K_r:
+                showing_rack = True
+                rack = curr_game.get_rack()
+                rack_menu_buttons = display_rack(rack, selected)
+                view_board_button_rect = rack_menu_buttons[0]
+                select_button_rect = rack_menu_buttons[1]
+        if paused:  # Display pause menu
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                mouse_pos = event.pos
+                if resume_button_rect.collidepoint(mouse_pos):
+                    paused = False
+                    draw_board(board)
+                    continue
+                elif options_button_rect.collidepoint(mouse_pos):
+                    # Do nothing for now when player presses the 'Options' button
+                    pass
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE:
+                    paused = False
+                    draw_board(board)
+                    continue
+        if showing_rack:
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                mouse_pos = event.pos
+                for i in range(2, len(rack_menu_buttons)):  # Start from index 2 to skip 'View Board' and 'Select Tile'
+                    tile_button_rect, rack_idx = rack_menu_buttons[i]
+                    if tile_button_rect.collidepoint(mouse_pos):
+                        tmp_selected = True
+                        tmp_selected_idx = rack_idx
+                        print("Current selected index: " + str(rack_idx))
+                        rack_menu_buttons = display_rack(rack, tmp_selected)
+                        continue
+                if view_board_button_rect.collidepoint(mouse_pos):
+                    showing_rack = False
+                    draw_board(board)
+                    continue
+                elif tmp_selected and select_button_rect.collidepoint(mouse_pos):
+                    selected = tmp_selected
+                    selected_idx = tmp_selected_idx
+                    tmp_selected = False
+                    tmp_selected_idx = -1
+                    showing_rack = False
+                    print("Tile selected!")
+                    draw_board(board)
+                    continue
+                else:
+                    selected_idx = -1
+                    continue
+        if selected and not paused and event.type == pygame.MOUSEBUTTONDOWN: # Display the board with pieces
             board = curr_game.get_board()
             turn = curr_game.get_turn()
             # Ask for Player 1 input
             if turn == 0:
-                # letter_idx = int(input("Player 1, choose a letter index from your rack (0-6): ")) # Will change to select input from list of options
-                letter_idx = 0 # REMINDER: Temporary placeholder
                 x_pos = event.pos[0]
                 column = int(x_pos // square_size)
-                curr_game.place_piece(letter_idx, column) ## QUESTION: How will players differentiate their letter tiles from the other player's?
-            
+                curr_game.place_piece(selected_idx, column)
 
             # Ask for Player 2 input
             else:
-                # letter_idx = int(input("Player 2, choose a letter index from your rack (0-6): ")) # Will change to select input from list of options
-                letter_idx = 0 # REMINDER: Temporary placeholder
                 x_pos = event.pos[0]
                 column = int(x_pos // square_size)
-                curr_game.place_piece(letter_idx, column)
-
+                curr_game.place_piece(selected_idx, column)
+            selected_idx = -1
+            selected = False
             print_board(board)
             if game_started:
                 draw_board(board)
