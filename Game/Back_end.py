@@ -166,14 +166,14 @@ class Game:
                 potential_word = ltrs_string[start:end]
 
                 # forward
-                if not '*' in potential_word and potential_word in self.dict:
+                if potential_word in self.dict:
                     # score per letter in word
                     for letter in potential_word:
                         score += self.score_dict[letter]
 
                 # backward
                 potential_word = potential_word[::-1]
-                if not '*' in potential_word and potential_word in self.dict:
+                if potential_word in self.dict:
                     # score per letter in word
                     for letter in potential_word:
                         score += self.score_dict[letter]
@@ -198,86 +198,90 @@ class Game:
         score = 0
 
         # horizontal words
-        # row = [origin]
-        # key_pos = 0
-        # for i in range(1, col_idx + 1):
-        #     val = self.board[row_idx][col_idx - i]
-        #     if val == "*":
-        #         break
+        row = [origin]
+        key_pos = 0
+        for i in range(1, col_idx + 1):
+            val = self.board[row_idx][col_idx - i]
+            if val == "*":
+                break
 
-        #     key_pos += 1
-        #     row.append(val)
-        # row.reverse()
-        # for i in range(1, self.width - col_idx):
-        #     val = self.board[row_idx][col_idx + i]
-        #     if val == "*":
-        #         break
+            key_pos += 1
+            row.append(val)
+        row.reverse()
+        for i in range(1, self.width - col_idx):
+            val = self.board[row_idx][col_idx + i]
+            if val == "*":
+                break
 
-        #     row.append(val)
+            row.append(val)
 
-        row = self.board[col_idx]
+        # row = self.board[row_idx]
+        # key_pos = col_idx
         score += self.score_list(row, key_pos, self.min_word_length)
 
-        # # vertical words
-        # col = [origin]
-        # key_pos = 0
-        # for i in range(1, row_idx + 1):
-        #     val = self.board[row_idx - i][col_idx]
-        #     if val == "*":
-        #         break
+        # vertical words
+        col = [origin]
+        key_pos = 0
+        for i in range(1, row_idx + 1):
+            val = self.board[row_idx - i][col_idx]
+            if val == "*":
+                break
 
-        #     key_pos += 1
-        #     col.append(val)
-        # col.reverse()
-        # for i in range(1, self.height - row_idx):
-        #     val = self.board[row_idx + i][col_idx]
-        #     if val == "*":
-        #         break
+            key_pos += 1
+            col.append(val)
+        col.reverse()
+        for i in range(1, self.height - row_idx):
+            val = self.board[row_idx + i][col_idx]
+            if val == "*":
+                break
 
-        #     col.append(val)
-        col = [row[col_idx] for row in self.board]
+            col.append(val)
+        # col = [row[col_idx] for row in self.board]
+        # key_pos = row_idx
         score += self.score_list(col, key_pos, self.min_word_length)
 
         # up-right words
-        # main_diagonal = [origin]
-        # key_pos = 0
-        # for i in range(1, min(row_idx, col_idx) + 1):
-        #     val = self.board[row_idx - i][col_idx - i]
-        #     if val == "*":
-        #         break
+        main_diagonal = [origin]
+        key_pos = 0
+        for i in range(1, min(row_idx, col_idx) + 1):
+            val = self.board[row_idx - i][col_idx - i]
+            if val == "*":
+                break
 
-        #     key_pos += 1
-        #     main_diagonal.append(val)
-        # main_diagonal.reverse()
-        # for i in range(1, min(self.height - row_idx, self.width - col_idx)):
-        #     val = self.board[row_idx + i][col_idx + i]
-        #     if val == "*":
-        #         break
+            key_pos += 1
+            main_diagonal.append(val)
+        main_diagonal.reverse()
+        for i in range(1, min(self.height - row_idx, self.width - col_idx)):
+            val = self.board[row_idx + i][col_idx + i]
+            if val == "*":
+                break
 
-        #     main_diagonal.append(val)
-        main_diagonal = [self.board[row_idx + i][col_idx + i] for i in range(
-           max(0 - row_idx, 0 - col_idx), min(self.height - row_idx, self.width - col_idx))]
+            main_diagonal.append(val)
+        # main_diagonal = [self.board[row_idx + i][col_idx + i] for i in range(
+        #    max(0 - row_idx, 0 - col_idx), min(self.height - row_idx, self.width - col_idx))]
+        # key_pos = min(row_idx, col_idx)
         score += self.score_list(main_diagonal, key_pos, self.min_word_length)
 
         # up-left words
-        # anti_diagonal = [origin]
-        # key_pos = 0
-        # for i in range(1, min(row_idx + 1, self.width - col_idx)):
-        #     val = self.board[row_idx - i][col_idx + i]
-        #     if val == "*":
-        #         break
+        anti_diagonal = [origin]
+        key_pos = 0
+        for i in range(1, min(row_idx + 1, self.width - col_idx)):
+            val = self.board[row_idx - i][col_idx + i]
+            if val == "*":
+                break
 
-        #     key_pos += 1
-        #     col.append(val)
-        # col.reverse()
-        # for i in range(1, min(self.height - row_idx, col_idx + 1)):
-        #     val = self.board[row_idx + i][col_idx - i]
-        #     if val == "*":
-        #         break
+            key_pos += 1
+            col.append(val)
+        col.reverse()
+        for i in range(1, min(self.height - row_idx, col_idx + 1)):
+            val = self.board[row_idx + i][col_idx - i]
+            if val == "*":
+                break
 
-        #     col.append(val)
-        anti_diagonal = [self.board[row_idx + i][col_idx - i] for i in range(max(
-           0 - row_idx, col_idx - self.width + 1), min(self.height - row_idx, col_idx + 1))]
+            col.append(val)
+        # anti_diagonal = [self.board[row_idx + i][col_idx - i] for i in range(max(
+        #    0 - row_idx, col_idx - self.width + 1), min(self.height - row_idx, col_idx + 1))]
+        # key_pos = min(row_idx, self.width - col_idx - 1)
         score += self.score_list(anti_diagonal, key_pos, self.min_word_length)
 
         return score
