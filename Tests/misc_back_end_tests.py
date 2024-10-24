@@ -5,6 +5,7 @@ import os
 import cProfile
 import pstats
 from pstats import SortKey
+from collections import defaultdict
 
 sys.path.append(os.path.abspath(os.path.join(
     os.path.dirname(__file__), '../Game')))
@@ -213,27 +214,109 @@ if not check:
 
 # ------------------------------- Testing scoring: -------------------------------
 
-game_instance = Game(board_size = (7,7))
+custom_dict = dict()
+custom_dict["LEVEL"] = "?"
+custom_dict["TESTS"] = "?"
+custom_dict["TEST"] = "?"
+custom_dict["SET"] = "?"
+custom_dict["AMAZING"] = "?"
 
-test_board = [["t", "*", "*", "*", "t", "*", "*"],
-              ["l", "e", "v", "e", "l", "*", "*"],
-              ["*", "*", "s", "*", "*", "*", "*"],
-              ["*", "t", "*", "t", "*", "*", "*"],
-              ["*", "s", "t", "e", "s", "t", "s"],
-              ["*", "e", "*", "s", "*", "*", "*"],
-              ["*", "t", "*", "t", "*", "*", "*"]]
+game_instance = Game(board_size = (7,7), word_dictionary = custom_dict)
+
+test_board = [["T", "*", "*", "*", "T", "*", "G"],
+              ["L", "E", "V", "E", "L", "*", "N"],
+              ["*", "*", "S", "*", "*", "*", "I"],
+              ["*", "T", "*", "T", "*", "*", "Z"],
+              ["S", "E", "*", "S", "*", "*", "A"],
+              ["*", "S", "T", "E", "S", "T", "M"],
+              ["*", "T", "*", "T", "*", "*", "A"]]
+
+expected_outputs = defaultdict(lambda : defaultdict(lambda : []))
+
+#first column
+expected_outputs [0][0] = [("TEST", 4, "?", ((0, 0), (3, 3)))]
+expected_outputs [0][1] = [("LEVEL", 8, "?", ((0, 1), (4, 1))), ("LEVEL", 8, "?", ((4, 1), (0, 1)))]
+expected_outputs [0][4] = [("TESTS", 5, "?", ((4, 0), (0, 4)))]
+
+#second column
+expected_outputs [1][1] = [("LEVEL", 8, "?", ((0, 1), (4, 1))), ("LEVEL", 8, "?", ((4, 1), (0, 1))), ("TEST", 4, "?", ((0, 0), (3, 3)))]
+expected_outputs [1][3] = [("TEST", 4, "?", ((4, 0), (1, 3))), ("TESTS", 5, "?", ((4, 0), (0, 4))), ("TEST", 4, "?", ((1, 3), (1, 6)))]
+expected_outputs [1][4] = expected_outputs [1][5] = expected_outputs [1][6] =[("TEST", 4, "?", ((1, 3), (1, 6)))]
+
+
+#third column
+expected_outputs [2][1] = [("LEVEL", 8, "?", ((0, 1), (4, 1))), ("LEVEL", 8, "?", ((4, 1), (0, 1)))]
+expected_outputs [2][2] = [("TEST", 4, "?", ((4, 0), (1, 3))), ("TESTS", 5, "?", ((4, 0), (0, 4))), ("TEST", 4, "?", ((0, 0), (3, 3)))]
+expected_outputs [2][5] = [("TEST", 4, "?", ((2, 5), (5, 5)))]
+
+#fourth column
+expected_outputs [3][1] = [("LEVEL", 8, "?", ((0, 1), (4, 1))), ("LEVEL", 8, "?", ((4, 1), (0, 1))), ("TEST", 4, "?", ((4, 0), (1, 3))), ("TESTS", 5, "?", ((4, 0), (0, 4)))]
+expected_outputs [3][3] = [("TEST", 4, "?", ((0, 0), (3, 3))), ("TEST", 4, "?", ((3, 6), (3, 3)))]
+expected_outputs [3][4] = expected_outputs [3][6] = [("TEST", 4, "?", ((3, 6), (3, 3)))]
+expected_outputs [3][5] = [("TEST", 4, "?", ((3, 6), (3, 3))), ("TEST", 4, "?", ((2, 5), (5, 5)))]
+
+
+#fifth column
+expected_outputs [4][0] = [("TEST", 4, "?", ((4, 0), (1, 3))), ("TESTS", 5, "?", ((4, 0), (0, 4)))]
+expected_outputs [4][1] = [("LEVEL", 8, "?", ((0, 1), (4, 1))), ("LEVEL", 8, "?", ((4, 1), (0, 1)))]
+expected_outputs [4][5] = [("TEST", 4, "?", ((2, 5), (5, 5)))]
+
+#sixth column
+expected_outputs [5][5] = [("TEST", 4, "?", ((2, 5), (5, 5)))]
+
+#seventh column (amazing)
+expected_outputs [6] = defaultdict(lambda : [("AMAZING", 19, "?", ((6, 6), (6, 0)))])
+
 
 game_instance.board = test_board
+printed = False
 
-print(game_instance)
+#check each square on grid against expected output
+for x in range(7):
+    for y in range(7):
+        word_list = game_instance.get_words(x,y)
+        check = set(word_list) == set(expected_outputs[x][y])
+        if not check:
+            all_tests = False
 
-
-#assert something about the board
-check = True
+            if not printed:
+                printed = True
+                print(game_instance)
+            
+            print(f"Something went wrong when finding words at location ({x}, {y}):")
+            print("Expected:")
+            print(expected_outputs[x][y])
+            print("Got:")
+            print(word_list)
+            print()
+        #important = input()
+            
+#testing different min word lengths
+game_instance.min_word_length = 3
+word_list = game_instance.get_words(4,0)
+check = set(word_list) == set([("SET", 3, "?", ((2, 2), (4, 0))), ("TEST", 4, "?", ((4, 0), (1, 3))), ("TESTS", 5, "?", ((4, 0), (0, 4)))])
 if not check:
     all_tests = False
     print(game_instance)
-    print("message")
+    print(f"Min length 3 failes")
+    print("Expected:")
+    print([("SET", 3, "?", ((2, 2), (4, 0))), ("TEST", 4, "?", ((4, 0), (1, 3))), ("TESTS", 5, "?", ((4, 0), (0, 4)))])
+    print("Got:")
+    print(word_list)
+    print()
+
+game_instance.min_word_length = 5
+word_list = game_instance.get_words(4,0)
+check = set(word_list) == set([("TESTS", 5, "?", ((4, 0), (0, 4)))])
+if not check:
+    all_tests = False
+    print(game_instance)
+    print(f"Min length 5 failes")
+    print("Expected:")
+    print([("TESTS", 5, "?", ((4, 0), (0, 4)))])
+    print("Got:")
+    print(word_list)
+    print()
 
 # -------------------------------------- end --------------------------------------
 if all_tests:

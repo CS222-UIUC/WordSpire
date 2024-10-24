@@ -2,6 +2,7 @@ import random
 import contextlib
 import io
 import os
+import math
 
 # default letters and their value
 default_letter_bag = ["A", "A", "A", "A", "A", "A", "A", "A", "A", "B", "B", "C", "C", "D", "D", "D", "D", "E", "E", "E", "E", "E", "E", "E", "E", "E", "E", "E", "E", "F", "F", "G", "G", "G", "H", "H", "I", "I", "I", "I", "I", "I", "I", "I", "I", "J", "K",
@@ -18,7 +19,7 @@ with open(new_path, 'r') as file:
     # read lines from the file into the dictionary
     for line in file.readlines():
         key, value = line.strip().split('	')
-        default_word_dictionary[key.strip()] = value.strip()
+        default_word_dictionary[key.strip().upper()] = value.strip()
 
 
 class Game:
@@ -135,10 +136,14 @@ class Game:
                     self.rack_size -= 1
 
                 # score
+                words = self.get_words(col_idx,row_idx)
                 if self.turn:
-                    self.p2_score += self.score_loc(row_idx, col_idx)
+                    for word in words:
+                        self.p2_score += word[1]
+
                 else:
-                    self.p1_score += self.score_loc(row_idx, col_idx)
+                    for word in words:
+                        self.p2_score += word[1]
 
                 # change_turn
                 if self.mode == "local_mult" or self.mode == "online_mult":
@@ -148,22 +153,27 @@ class Game:
 
         return 1  # returns 1 error code for column full
 
-    def score_list(self, letters: list, key_idx: int, min_len: int):
+    def search_list(self, letters: list, key_idx: int, min_len: int, start_pos: tuple[int, int], end_pos: tuple[int, int]):
         """
-        Scores all valid words in a single row/list of characters
+        Finds all valid words and their definitinons in a single row/list of characters
 
             letters (list): list of upercase letters in a row
             key_idx: (int): index of letter required to be in word
-            min_len (int): minimum length words to score
+            min_len (int):  minimum length words to score
+            start_pos (tuple(int,int)):
+            end_pos (tuple(int,int)):
 
         Return:
             score (int): number of points for all found words
         """
 
         # initialize basic variables
-        score = 0
+        words = []
         max_idx = len(letters)
         ltrs_string = "".join(letters)
+
+        col_dir = int(math.copysign(1, end_pos[0] - start_pos[0])) if end_pos[0] - start_pos[0] != 0 else 0
+        row_dir = int(math.copysign(1, end_pos[1] - start_pos[1])) if end_pos[1] - start_pos[1] != 0 else 0
 
         for start in range(key_idx + 1):   # loop over possible start indices
             # loop over possible end indices
@@ -172,124 +182,115 @@ class Game:
 
                 # forward
                 if potential_word in self.dict:
-                    # score per letter in word
+                    word_start = (start_pos[0] + col_dir * start, start_pos[1] + row_dir * start)
+                    word_end   = (start_pos[0] + col_dir * (end - 1), start_pos[1] + row_dir * (end - 1))
+                    score = 0
                     for letter in potential_word:
                         score += self.score_dict[letter]
-
+                    words.append((potential_word, score, self.dict[potential_word], (word_start, word_end)))
+                   
                 # backward
                 potential_word = potential_word[::-1]
                 if potential_word in self.dict:
-                    # score per letter in word
+                    word_start = (start_pos[0] + col_dir * (end - 1), start_pos[1] + row_dir * (end - 1))
+                    word_end   = (start_pos[0] + col_dir * start, start_pos[1] + row_dir * start)
+                    score = 0
                     for letter in potential_word:
                         score += self.score_dict[letter]
+                    words.append((potential_word, score, self.dict[potential_word], (word_start, word_end)))
 
-        return score
+        return words
 
-    def score_loc(self, row_idx: int, col_idx: int):
+    def get_words(self, col_idx: int, row_idx: int):
         """
         Scores a move that places a tile
 
-            row_idx (int): an int between 0 and board_height giving the row in which a piece was placed
-            col_idx (int): an int between 0 and board_width giving the col in which a piece was palced
-
+            col_idx (int): an int between 0 and board_width giving the col of the tile for which we want to find words 
+            row_idx (int): an int between 0 and board_height giving the row of the tile for which we want to find words 
+            
         Return:
-            status_code (int): 0 if successful, 1 if column is full, 2 if outside board, 3 if outside rack 
+            words (list((string, int, string, ((int, int), (int, int))))): list of words, score, their definitions, and location on the board
         """
 
         origin = self.board[row_idx][col_idx]
         if origin == "*":
-            return 0
+            return []
 
-        score = 0
+        words = []
 
         # horizontal words
-        row = [origin]
-        key_pos = 0
-        for i in range(1, col_idx + 1):
-            val = self.board[row_idx][col_idx - i]
-            if val == "*":
+        start_offset = col_idx
+        for i in range(1, start_offset + 1):
+            if self.board[row_idx][col_idx - i] == "*":
+                start_offset = i - 1
                 break
-
-            key_pos += 1
-            row.append(val)
-        row.reverse()
-        for i in range(1, self.width - col_idx):
-            val = self.board[row_idx][col_idx + i]
-            if val == "*":
+        
+        end_offset = self.width - col_idx - 1   
+        for i in range(1, end_offset + 1):
+            if self.board[row_idx][col_idx + i] == "*":
+                end_offset = i - 1
                 break
-
-            row.append(val)
-
-        # row = self.board[row_idx]
-        # key_pos = col_idx
-        score += self.score_list(row, key_pos, self.min_word_length)
+            
+        row = self.board[row_idx][col_idx - start_offset : col_idx + end_offset + 1]
+        start_pos = (col_idx - start_offset, row_idx)
+        end_pos = (col_idx + end_offset - 1, row_idx)
+        words.extend(self.search_list(row, start_offset, self.min_word_length, start_pos, end_pos))
 
         # vertical words
-        col = [origin]
-        key_pos = 0
-        for i in range(1, row_idx + 1):
-            val = self.board[row_idx - i][col_idx]
-            if val == "*":
+        start_offset = row_idx
+        for i in range(1, start_offset + 1):
+            if self.board[row_idx - i][col_idx] == "*":
+                start_offset = i - 1
+                break
+        
+        end_offset = self.height - row_idx - 1
+        for i in range(1, end_offset + 1):
+            if self.board[row_idx + i][col_idx] == "*":
+                end_offset = i - 1
                 break
 
-            key_pos += 1
-            col.append(val)
-        col.reverse()
-        for i in range(1, self.height - row_idx):
-            val = self.board[row_idx + i][col_idx]
-            if val == "*":
-                break
-
-            col.append(val)
-        # col = [row[col_idx] for row in self.board]
-        # key_pos = row_idx
-        score += self.score_list(col, key_pos, self.min_word_length)
+        col = [self.board[row_idx + row][col_idx] for row in range(-start_offset, end_offset + 1)]
+        start_pos = (col_idx, row_idx - start_offset)
+        end_pos = (col_idx, row_idx + end_offset - 1)
+        words.extend(self.search_list(col, start_offset, self.min_word_length, start_pos, end_pos))
 
         # up-right words
-        main_diagonal = [origin]
-        key_pos = 0
-        for i in range(1, min(row_idx, col_idx) + 1):
-            val = self.board[row_idx - i][col_idx - i]
-            if val == "*":
+        start_offset = min(row_idx, col_idx)
+        for i in range(1, start_offset + 1):
+            if self.board[row_idx - i][col_idx - i] == "*":
+                start_offset = i - 1
                 break
 
-            key_pos += 1
-            main_diagonal.append(val)
-        main_diagonal.reverse()
-        for i in range(1, min(self.height - row_idx, self.width - col_idx)):
-            val = self.board[row_idx + i][col_idx + i]
-            if val == "*":
+        end_offset = min(self.height - row_idx - 1, self.width - col_idx - 1)
+        for i in range(1, end_offset + 1):
+            if self.board[row_idx + i][col_idx + i] == "*":
+                end_offset = i - 1
                 break
-
-            main_diagonal.append(val)
-        # main_diagonal = [self.board[row_idx + i][col_idx + i] for i in range(
-        #    max(0 - row_idx, 0 - col_idx), min(self.height - row_idx, self.width - col_idx))]
-        # key_pos = min(row_idx, col_idx)
-        score += self.score_list(main_diagonal, key_pos, self.min_word_length)
+            
+        main_diagonal = [self.board[row_idx + i][col_idx + i] for i in range(-start_offset, end_offset + 1)]
+        start_pos = (col_idx  - start_offset, row_idx - start_offset)
+        end_pos = (col_idx + end_offset - 1, row_idx + end_offset - 1)
+        words.extend(self.search_list(main_diagonal, start_offset, self.min_word_length, start_pos, end_pos))
 
         # up-left words
-        anti_diagonal = [origin]
-        key_pos = 0
-        for i in range(1, min(row_idx + 1, self.width - col_idx)):
-            val = self.board[row_idx - i][col_idx + i]
-            if val == "*":
+        start_offset = min(row_idx, self.width - col_idx - 1)
+        for i in range(1, start_offset + 1):
+            if self.board[row_idx - i][col_idx + i] == "*":
+                start_offset = i - 1
                 break
 
-            key_pos += 1
-            col.append(val)
-        col.reverse()
-        for i in range(1, min(self.height - row_idx, col_idx + 1)):
-            val = self.board[row_idx + i][col_idx - i]
-            if val == "*":
+        end_offset = min(self.height - row_idx - 1, col_idx)
+        for i in range(1, end_offset + 1):
+            if self.board[row_idx + i][col_idx - i] == "*":
+                end_offset = i - 1
                 break
 
-            col.append(val)
-        # anti_diagonal = [self.board[row_idx + i][col_idx - i] for i in range(max(
-        #    0 - row_idx, col_idx - self.width + 1), min(self.height - row_idx, col_idx + 1))]
-        # key_pos = min(row_idx, self.width - col_idx - 1)
-        score += self.score_list(anti_diagonal, key_pos, self.min_word_length)
+        anti_diagonal = [self.board[row_idx + i][col_idx - i] for i in range(-start_offset, end_offset + 1)]
+        start_pos = (col_idx  + start_offset, row_idx - start_offset)
+        end_pos = (col_idx - end_offset + 1, row_idx + end_offset - 1)
+        words.extend(self.search_list(anti_diagonal, start_offset, self.min_word_length, start_pos, end_pos))
 
-        return score
+        return words
 
     def get_game_state(self):
         """
