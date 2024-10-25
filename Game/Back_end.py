@@ -56,19 +56,21 @@ class Turn:
         self.letter = letter
         self.letter_col = letter_col
         self.score_gained = score_gained
-        self.words_formed = words_formed 
+        self.words_formed = words_formed
 
-        # # create board with highlighted words
-        # for word in words_formed:
-        #     start_pos = word[3][0]
-        #     end_pos = word[3][1]
-        #     row_dir = int(math.copysign(1, end_pos[0] - start_pos[0]))
-        #     col_dir = int(math.copysign(1, end_pos[1] - start_pos[1]))
-        #     for i in range(len(word[0])):
-        #         row, col = start_pos[0] + i * \
-        #             row_dir, start_pos[1] + i * col_dir
-        #         self.board[row][col] = f'{
-        #             bcolors.OKBLUE}{self.board[row][col]}{bcolors.ENDC}'
+        # create board with highlighted words
+        for word in words_formed:
+            start_pos = word[3][0]
+            end_pos = word[3][1]
+            col_dir = int(math.copysign(
+                1, end_pos[0] - start_pos[0])) if end_pos[0] - start_pos[0] != 0 else 0
+            row_dir = int(math.copysign(
+                1, end_pos[1] - start_pos[1])) if end_pos[1] - start_pos[1] != 0 else 0
+            for i in range(len(word[0])):
+                row, col = start_pos[1] + i * \
+                    row_dir, start_pos[0] + i * col_dir
+                self.board[row][col] = f'{
+                    bcolors.OKBLUE}{self.board[row][col]}{bcolors.ENDC}'
 
     def __str__(self):
         """
