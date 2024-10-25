@@ -1,10 +1,10 @@
 import pygame #https://www.pygame.org/docs/
 import numpy as np
 import sys
-import math
 import string
 import os
 import Back_end
+import time
 
 # Color definitions
 BLUE = (0, 0, 255)
@@ -88,7 +88,7 @@ def display_start_menu():
     Function to display the start menu
 
     Return:
-        start_button_rect (pygame.rect.Rect): pygame object representing the start button's rectangle
+        start_button_rect (pygame.rect.Rect): pygame object representing the "Start" text button box
     """
     
     # Create title text
@@ -195,8 +195,8 @@ def display_pause_menu():
     Function to display the pause menu
 
     Return:
-        resume_button_rect (pygame.rect.Rect): pygame object representing the resume text button box
-        options_button_rect (pygame.rect.Rect): pygame object representing the options text button box
+        resume_button_rect (pygame.rect.Rect): pygame object representing the "Resume" text button box
+        options_button_rect (pygame.rect.Rect): pygame object representing the "Options" text button box
     """
     # Display Pause Menu
     font = pygame.font.Font('freesansbold.ttf', 32)
@@ -242,6 +242,123 @@ def create_text_button(location, message="", font_size=28, text_color=BLACK, but
     screen.blit(button_text, button_text_rect)
     return button_rect
 
+def display_error_message(message):
+    """
+    Function to display a pop-up box that will tell the player the error message for their disallowed
+    or undefined behavior
+
+        message (str): string representation of error message to display
+
+    Return:
+        x_button_rect (pygame.rect.Rect): pygame object representing the "X" text button box to exit pop-up
+    """
+
+    # TODO: Create pop-up box with "X" button and error message
+
+    # Define the dimensions for the error menu pop-up
+    menu_width = width * 0.6  # Adjusted width for longer messages
+    menu_height = height * 0.4  # Adjusted height
+    menu_x = (width - menu_width) / 2
+    menu_y = (height - menu_height) / 2
+    error_menu_rect = pygame.Rect(menu_x, menu_y, menu_width, menu_height)
+
+    # Draw the error menu with rounded corners
+    pygame.draw.rect(screen, DARK_GRAY, error_menu_rect, width=0, border_radius=10)
+
+    # Display the error message with word wrapping
+    font = pygame.font.Font('freesansbold.ttf', 24)  # Adjust font size if needed
+    words = message.split()
+    lines = []
+    current_line = ""
+
+    # Word wrapping logic
+    for word in words:
+        # Check if adding the next word exceeds the menu width
+        if font.size(current_line + word)[0] < (menu_width - 40):  # 40px padding
+            current_line += word + " "
+        else:
+            lines.append(current_line.strip())
+            current_line = word + " "
+    if current_line:
+        lines.append(current_line.strip())
+
+    # Render each line of text, starting lower in the pop-up
+    start_y = menu_y + 120  # Adjusted starting Y position (increased to be lower)
+    for i, line in enumerate(lines):
+        error_text = font.render(line, True, WHITE)
+        error_text_rect = error_text.get_rect(center=(menu_x + menu_width / 2, start_y + i * 30))  # 30px line spacing
+        screen.blit(error_text, error_text_rect)
+
+    # Create a close button ("X") in the top right of the pop-up
+    close_button_center = (menu_x + menu_width / 2 + 80, menu_y + 10)
+    x_button_rect = create_text_button(close_button_center, "X", font_size=24, text_color=WHITE, button_color=RED)
+
+    # Update the display to show the pop-up and the close button
+    pygame.display.update()
+
+    return x_button_rect
+
+def display_tile_definitions(row_idx, col_idx):
+    """
+    Function to display the term(s) and definition(s), if any, for the given tile
+
+        row (int): index from 0-6 representing the row from left to right
+        column (int): index from 0-6 representing 
+
+    Return:
+        x_button_rect (pygame.rect.Rect): pygame object representing the "X" text button box to exit pop-up
+        r_arrow_button_rect (pygame.rect.Rect): pygame object representing the right arrow ">" text button box to
+                                                display next term/definition pair
+        l_arrow_button_rect (ptgame.rect.Rect): pygame object representing the left arrow "<" text button box to
+                                                display previous term/definition pair
+    """
+    pass
+
+def display_game_over(game_state):
+    """
+    Game over function; displays the winning player, a game over message, and an option to restart or quit
+
+        game_state (int): current state of the game; 0 if game is not over, 1 if player 1 wins, 2 if player 2 wins, 3 if tie
+
+    Return:
+        restart_button_rect (pygame.rect.Rect): pygame object representing the "Restart" text button box
+        quit_button_rect (pygame.rect.Rect): pygame object representing the "Quit" text button box
+    """
+    if game_state == 0:
+        return 0
+    
+    font = pygame.font.Font('freesansbold.ttf', 48)
+    text = font.render("Game Over", True, WHITE)
+    textRect = text.get_rect()
+    textRect.center = (width / 2, height / 2 - 50)
+    screen.blit(text, textRect)
+
+    winning_player = str(game_state)
+    winning_text = "Player " + winning_player + " won!"
+    if game_state == 1:
+        color = BLUE
+    elif game_state == 2:
+        color = RED
+    else:
+        color = GREEN
+        winning_text = "It's a tie!"
+    font = pygame.font.Font('freesansbold.ttf', 50)
+    text = font.render(winning_text, True, color)
+    textRect = text.get_rect()
+    textRect.center = (width / 2, 75)
+    screen.blit(text, textRect)
+
+    restart_button_center = (width / 2 - 60, height / 2 + 20)
+    restart_button_rect = create_text_button(restart_button_center, message = "Restart")
+
+    quit_button_center = (width / 2 - 60, height / 2 + 100)
+    quit_button_rect = create_text_button(quit_button_center, message = "Quit")
+
+    pygame.display.update()
+
+    return restart_button_rect, quit_button_rect
+
+
 # Draw the board
 pygame.display.update()
 print_board(board)
@@ -254,9 +371,12 @@ selected = False
 selected_idx = -1
 tmp_selected = False
 tmp_selected_idx = -1
+error_message = ""
+error_message_drawn = False
 
 #check to make sure the game is not over yet 
-while (game_over == 0): 
+while True:
+    game_over = curr_game.get_game_state()
     screen.fill(BLACK)
     for event in pygame.event.get(): #any motion
         # Update board and turn number
@@ -266,13 +386,47 @@ while (game_over == 0):
         if event.type == pygame.QUIT: #user can exit if needed
             sys.exit()
         if not game_started:  # Display starting menu
-            if event.type == pygame.MOUSEBUTTONDOWN:
+            if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                 mouse_pos = event.pos
                 if start_button_rect.collidepoint(mouse_pos):
                     game_started = True
                     screen.fill(BLACK)
                     draw_board(board)
                     continue
+                continue
+        if game_over > 0:
+            restart_button_rect, quit_button_rect = display_game_over(game_over)
+            if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                mouse_pos = event.pos
+                if restart_button_rect.collidepoint(mouse_pos):
+                    curr_game = Back_end.Game()
+                    board_list = curr_game.get_board() # gets the current board state, which is a 2D array of strings
+                    board = np.array(board_list)
+                    rack_list = curr_game.get_rack()
+                    rack = np.array(rack_list)
+                    game_over = curr_game.get_game_state()
+                    turn = curr_game.get_turn()
+                    game_started = False
+                    screen.fill(BLACK)
+                    start_button_rect = display_start_menu()
+                elif quit_button_rect.collidepoint(mouse_pos):
+                    sys.exit()
+                else:
+                    pass
+        if error_message != "":
+            if not error_message_drawn:
+                draw_board(board)
+                x_button_rect = display_error_message(error_message)
+            error_message_drawn = True
+            if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                mouse_pos = event.pos
+                if x_button_rect.collidepoint(mouse_pos):
+                    error_message = ""
+                    draw_board(board)
+                    continue
+                else:
+                    pass
+            else:
                 continue
         if game_started and event.type == pygame.KEYDOWN:  # Go into pause menu
             if event.key == pygame.K_p:
@@ -285,63 +439,69 @@ while (game_over == 0):
                 view_board_button_rect = rack_menu_buttons[0]
                 select_button_rect = rack_menu_buttons[1]
         if paused:  # Display pause menu
-            if event.type == pygame.MOUSEBUTTONDOWN:
-                mouse_pos = event.pos
-                if resume_button_rect.collidepoint(mouse_pos):
-                    paused = False
-                    draw_board(board)
-                    continue
-                elif options_button_rect.collidepoint(mouse_pos):
-                    # Do nothing for now when player presses the 'Options' button
-                    pass
+            if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                    mouse_pos = event.pos
+                    if resume_button_rect.collidepoint(mouse_pos):
+                        paused = False
+                        draw_board(board)
+                        continue
+                    elif options_button_rect.collidepoint(mouse_pos):
+                        # Do nothing for now when player presses the 'Options' button
+                        pass
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
                     paused = False
                     draw_board(board)
                     continue
         if showing_rack:
-            if event.type == pygame.MOUSEBUTTONDOWN:
-                mouse_pos = event.pos
-                for i in range(2, len(rack_menu_buttons)):  # Start from index 2 to skip 'View Board' and 'Select Tile'
-                    tile_button_rect, rack_idx = rack_menu_buttons[i]
-                    if tile_button_rect.collidepoint(mouse_pos):
-                        tmp_selected = True
-                        tmp_selected_idx = rack_idx
-                        print("Current selected index: " + str(rack_idx))
-                        rack_menu_buttons = display_rack(rack, tmp_selected)
+            if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                    mouse_pos = event.pos
+                    for i in range(2, len(rack_menu_buttons)):  # Start from index 2 to skip 'View Board' and 'Select Tile'
+                        tile_button_rect, rack_idx = rack_menu_buttons[i]
+                        if tile_button_rect.collidepoint(mouse_pos):
+                            tmp_selected = True
+                            tmp_selected_idx = rack_idx
+                            print("Current selected index: " + str(rack_idx))
+                            rack_menu_buttons = display_rack(rack, tmp_selected)
+                            continue
+                    if view_board_button_rect.collidepoint(mouse_pos):
+                        showing_rack = False
+                        draw_board(board)
                         continue
-                if view_board_button_rect.collidepoint(mouse_pos):
-                    showing_rack = False
-                    draw_board(board)
-                    continue
-                elif tmp_selected and select_button_rect.collidepoint(mouse_pos):
-                    selected = tmp_selected
-                    selected_idx = tmp_selected_idx
-                    tmp_selected = False
-                    tmp_selected_idx = -1
-                    showing_rack = False
-                    print("Tile selected!")
-                    draw_board(board)
-                    continue
-                else:
-                    selected_idx = -1
-                    continue
-        if selected and not paused and event.type == pygame.MOUSEBUTTONDOWN: # Display the board with pieces
-            board = curr_game.get_board()
-            turn = curr_game.get_turn()
-            # Ask for Player 1 input
-            if turn == 0:
-                x_pos = event.pos[0]
-                column = int(x_pos // square_size)
-                curr_game.place_piece(selected_idx, column)
+                    elif tmp_selected and select_button_rect.collidepoint(mouse_pos):
+                        selected = tmp_selected
+                        selected_idx = tmp_selected_idx
+                        tmp_selected = False
+                        tmp_selected_idx = -1
+                        showing_rack = False
+                        print("Tile selected!")
+                        draw_board(board)
+                        continue
+                    else:
+                        selected_idx = -1
+                        continue
+        if selected and not paused and event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                board = curr_game.get_board()
+                turn = curr_game.get_turn()
+                # Ask for Player 1 input
+                if turn == 0:
+                    x_pos = event.pos[0]
+                    column = int(x_pos // square_size)
+                    placed_piece = curr_game.place_piece(selected_idx, column)
+                    if placed_piece == 1:
+                        error_message = "Column is full! Please place tile in a different column."
+                        display_error_message(error_message)
 
-            # Ask for Player 2 input
-            else:
-                x_pos = event.pos[0]
-                column = int(x_pos // square_size)
-                curr_game.place_piece(selected_idx, column)
-            selected_idx = -1
-            selected = False
-            print_board(board)
-            if game_started:
-                draw_board(board)
+                # Ask for Player 2 input
+                else:
+                    x_pos = event.pos[0]
+                    column = int(x_pos // square_size)
+                    placed_piece = curr_game.place_piece(selected_idx, column)
+                    if placed_piece == 1:
+                        error_message = "Column is full! Please place tile in a different column."
+                        display_error_message(error_message)
+                selected_idx = -1
+                selected = False
+                print_board(board)
+                if game_started:
+                    draw_board(board)
