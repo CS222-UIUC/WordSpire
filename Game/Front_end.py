@@ -4,7 +4,6 @@ import sys
 import string
 import os
 import Back_end
-import time
 
 # Color definitions
 BLUE = (0, 0, 255)
