@@ -1,7 +1,14 @@
 import random
 import contextlib
 import io
+import sys
 import os
+import math
+
+sys.path.append(os.path.abspath(os.path.join(
+    os.path.dirname(__file__), '../misc')))
+
+from console_text import bcolors  # noqa
 
 # default letters and their value
 default_letter_bag = ["A", "A", "A", "A", "A", "A", "A", "A", "A", "B", "B", "C", "C", "D", "D", "D", "D", "E", "E", "E", "E", "E", "E", "E", "E", "E", "E", "E", "E", "F", "F", "G", "G", "G", "H", "H", "I", "I", "I", "I", "I", "I", "I", "I", "I", "J", "K",
@@ -18,11 +25,97 @@ with open(new_path, 'r') as file:
     # read lines from the file into the dictionary
     for line in file.readlines():
         key, value = line.strip().split('	')
-        default_word_dictionary[key.strip()] = value.strip()
+        default_word_dictionary[key.strip().upper()] = value.strip()
+
+
+class Turn:
+    def __init__(self, board: list[list[int]], turn: int, letter: str, letter_col: int,
+                 score_gained: int, words_formed: list[tuple[str, int, str, tuple[tuple[int, int], tuple[int, int]]]]):
+        """
+        Innitialization function
+
+        Args:
+            board (list): the game's board after this turn
+            turn (int): 0 if player 1's turn, 1 if player 2's turn
+            letter (str): player's chosen letter
+            letter_col (tuple): column of placed letter, 0-indexed
+            score_gained (int): player's increase in score from this turn
+            words_formed (list): list of words formed and related info
+
+        Return:
+            Void
+        """
+
+        # board attributes
+        self.height = len(board)
+        self.width = len(board[0])
+
+        # store turn attributes
+        self.board = [[item for item in board[i]] for i in range(self.height)]
+        self.turn = turn
+        self.letter = letter
+        self.letter_col = letter_col
+        self.score_gained = score_gained
+        self.words_formed = words_formed
+
+        # create board with highlighted words
+        for word in words_formed:
+            start_pos = word[3][0]
+            end_pos = word[3][1]
+            col_dir = int(math.copysign(
+                1, end_pos[0] - start_pos[0])) if end_pos[0] - start_pos[0] != 0 else 0
+            row_dir = int(math.copysign(
+                1, end_pos[1] - start_pos[1])) if end_pos[1] - start_pos[1] != 0 else 0
+            for i in range(len(word[0])):
+                row, col = start_pos[1] + i * \
+                    row_dir, start_pos[0] + i * col_dir
+                self.board[row][col] = f'{
+                    bcolors.OKBLUE}{self.board[row][col]}{bcolors.ENDC}'
+
+    def __str__(self):
+        """
+        Function to define string representation of Turn object
+
+        The string representation states whose turn it is, the placed letter,
+        the column of the letter, the change in score, and the words formed
+
+        The board after this turn was played is also shown
+
+        Return:
+            res (string): String representation of the attributes stated above
+        """
+
+        # print board
+        row_str = '+'
+        for i in range(self.width):
+            row_str += '-----+'
+
+        res = 'Board:\n\n' + row_str + '\n'
+        for i in range(self.height - 1, -1, -1):
+            for j in range(self.width):
+                res += f'|  {self.board[i][j]}  '
+            res += f'|\n{row_str}\n'
+
+        # print column labels
+        res += '   '
+        for i in range(self.width):
+            res += f'{i + 1}     '
+
+        # print turn information
+        res += f"""\n\nPlayer {self.turn + 1} placed the letter \'{
+            self.letter}\' in column {self.letter_col + 1}.\n\n"""
+
+        if self.words_formed:
+            res += f"""Player {self.turn + 1} gained {
+                self.score_gained} score through the following words:\n"""
+            for word in self.words_formed:
+                res += f'   {word[0]} (+{word[1]})\n'
+
+        return res + '\n'
 
 
 class Game:
-    # all arguments have a defualt value but can be overwritten
+    # all arguments have a default value but can be overwritten
     def __init__(self, board_size: tuple[int, int] = (7, 7), rack_size: int = 7,
                  letter_bag: list[str] = default_letter_bag, letter_values: dict[str, int] = default_letter_values,
                  word_dictionary: dict[str, str] = default_word_dictionary, mode: str = "local_mult", min_word_length: int = 4):
@@ -31,7 +124,7 @@ class Game:
         Note: all arguments have a defualt value but can be overwritten
 
         Args:
-            board_size (tuple[2]): 1D tupple of length 2 containing width and height respectively
+            board_size (tuple[2]): 1D tuple of length 2 containing width and height respectively
             rack_size  (int): number of letters player can choose from on the letter rack
             letter_bag (list): list of starting letters
             letter_values (dict): a dictionary mapping all letters to their point value
@@ -62,6 +155,9 @@ class Game:
         self.turn = False
         self.dict = word_dictionary
         self.score_dict = letter_values
+
+        # game history (list of turns)
+        self.game_history = []
 
     def get_board(self):
         """
@@ -126,14 +222,31 @@ class Game:
                 row[col_idx] = self.rack[rack_idx]
 
                 # refill letter rack
-                self.rack[rack_idx] = self.letter_bag[-1]
-                self.letter_bag.pop()
+                if self.letter_bag:
+                    self.rack[rack_idx] = self.letter_bag[-1]
+                    self.letter_bag.pop()
+                # if no letters left in letter bag
+                else:
+                    self.rack.pop(rack_idx)
+                    self.rack_size -= 1
 
                 # score
+                score_gained = 0
+                words = self.get_words(col_idx, row_idx)
                 if self.turn:
-                    self.p2_score += self.score_loc(row_idx, col_idx)
+                    for word in words:
+                        score_gained += word[1]
+                        self.p2_score += word[1]
+
                 else:
-                    self.p1_score += self.score_loc(row_idx, col_idx)
+                    for word in words:
+                        score_gained += word[1]
+                        self.p2_score += word[1]
+
+                # add turn to game history
+                turn = Turn(self.board, self.turn,
+                            row[col_idx], col_idx, score_gained, words)
+                self.game_history.append(turn)
 
                 # change_turn
                 if self.mode == "local_mult" or self.mode == "online_mult":
@@ -143,80 +256,160 @@ class Game:
 
         return 1  # returns 1 error code for column full
 
-    def score_list(self, letters: list, key_idx: int, min_len: int):
+    def search_list(self, letters: list, key_idx: int, min_len: int, start_pos: tuple[int, int], end_pos: tuple[int, int]):
         """
-        Scores all valid words in a single row/list of characters
+        Finds all valid words and their definitions in a single row/list of characters
 
             letters (list): list of upercase letters in a row
             key_idx: (int): index of letter required to be in word
-            min_len (int): minimum length words to score
+            min_len (int):  minimum length words to score
+            start_pos (tuple(int,int)):
+            end_pos (tuple(int,int)):
 
         Return:
-            score (int): number of points for all found words
+            words (list((string, int, string, ((int, int), (int, int))))): list of words, score, their definitions, and location on the board
         """
 
         # initialize basic variables
-        score = 0
+        words = []
         max_idx = len(letters)
+        ltrs_string = "".join(letters)
 
-        for length in range(min_len, max_idx + 1):  # loop over lengths of words
-            # valid places to find word
-            for start in range(max(key_idx - length + 1, 0), min(key_idx, max_idx - length) + 1):
-                potential_word = "".join(letters[start: start + length])
+        col_dir = int(math.copysign(
+            1, end_pos[0] - start_pos[0])) if end_pos[0] - start_pos[0] != 0 else 0
+        row_dir = int(math.copysign(
+            1, end_pos[1] - start_pos[1])) if end_pos[1] - start_pos[1] != 0 else 0
+
+        for start in range(key_idx + 1):   # loop over possible start indices
+            # loop over possible end indices
+            for end in range(max(start + min_len, key_idx + 1), max_idx + 1):
+                potential_word = ltrs_string[start:end]
 
                 # forward
-                if not '*' in potential_word and potential_word in self.dict:
-                    print(potential_word)
-                    print(self.dict[potential_word])
-                    # score per letter in word
+                if potential_word in self.dict:
+                    word_start = (
+                        start_pos[0] + col_dir * start, start_pos[1] + row_dir * start)
+                    word_end = (start_pos[0] + col_dir * (end - 1),
+                                start_pos[1] + row_dir * (end - 1))
+                    score = 0
                     for letter in potential_word:
                         score += self.score_dict[letter]
+                    words.append(
+                        (potential_word, score, self.dict[potential_word], (word_start, word_end)))
 
                 # backward
                 potential_word = potential_word[::-1]
-                if not '*' in potential_word and potential_word in self.dict:
-                    print(potential_word)
-                    print(self.dict[potential_word])
-                    # score per letter in word
+                if potential_word in self.dict:
+                    word_start = (
+                        start_pos[0] + col_dir * (end - 1), start_pos[1] + row_dir * (end - 1))
+                    word_end = (start_pos[0] + col_dir *
+                                start, start_pos[1] + row_dir * start)
+                    score = 0
                     for letter in potential_word:
                         score += self.score_dict[letter]
+                    words.append(
+                        (potential_word, score, self.dict[potential_word], (word_start, word_end)))
 
-        return score
+        return words
 
-    def score_loc(self, row_idx: int, col_idx: int):
+    def get_words(self, col_idx: int, row_idx: int):
         """
         Scores a move that places a tile
 
-            row_idx (int): an int between 0 and board_height giving the row in which a piece was placed
-            col_idx (int): an int between 0 and board_width giving the col in which a piece was palced
+            col_idx (int): an int between 0 and board_width giving the col of the tile for which we want to find words 
+            row_idx (int): an int between 0 and board_height giving the row of the tile for which we want to find words 
 
         Return:
-            status_code (int): 0 if successful, 1 if column is full, 2 if outside board, 3 if outside rack 
+            words (list((string, int, string, ((int, int), (int, int))))): list of words, score, their definitions, and location on the board
         """
 
-        score = 0
+        origin = self.board[row_idx][col_idx]
+        if origin == "*":
+            return []
+
+        words = []
 
         # horizontal words
-        row = self.board[row_idx]
-        score += self.score_list(row, col_idx, self.min_word_length)
+        start_offset = col_idx
+        for i in range(1, start_offset + 1):
+            if self.board[row_idx][col_idx - i] == "*":
+                start_offset = i - 1
+                break
+
+        end_offset = self.width - col_idx - 1
+        for i in range(1, end_offset + 1):
+            if self.board[row_idx][col_idx + i] == "*":
+                end_offset = i - 1
+                break
+
+        row = self.board[row_idx][col_idx -
+                                  start_offset: col_idx + end_offset + 1]
+        start_pos = (col_idx - start_offset, row_idx)
+        end_pos = (col_idx + end_offset - 1, row_idx)
+        words.extend(self.search_list(row, start_offset,
+                     self.min_word_length, start_pos, end_pos))
 
         # vertical words
-        col = [row[col_idx] for row in self.board]
-        score += self.score_list(col, row_idx, self.min_word_length)
+        start_offset = row_idx
+        for i in range(1, start_offset + 1):
+            if self.board[row_idx - i][col_idx] == "*":
+                start_offset = i - 1
+                break
+
+        end_offset = self.height - row_idx - 1
+        for i in range(1, end_offset + 1):
+            if self.board[row_idx + i][col_idx] == "*":
+                end_offset = i - 1
+                break
+
+        col = [self.board[row_idx + row][col_idx]
+               for row in range(-start_offset, end_offset + 1)]
+        start_pos = (col_idx, row_idx - start_offset)
+        end_pos = (col_idx, row_idx + end_offset - 1)
+        words.extend(self.search_list(col, start_offset,
+                     self.min_word_length, start_pos, end_pos))
 
         # up-right words
-        main_diagonal = [self.board[row_idx + i][col_idx + i] for i in range(
-            max(0 - row_idx, 0 - col_idx), min(self.height - row_idx, self.width - col_idx))]
-        score += self.score_list(main_diagonal,
-                                 min(row_idx, col_idx), self.min_word_length)
+        start_offset = min(row_idx, col_idx)
+        for i in range(1, start_offset + 1):
+            if self.board[row_idx - i][col_idx - i] == "*":
+                start_offset = i - 1
+                break
+
+        end_offset = min(self.height - row_idx - 1, self.width - col_idx - 1)
+        for i in range(1, end_offset + 1):
+            if self.board[row_idx + i][col_idx + i] == "*":
+                end_offset = i - 1
+                break
+
+        main_diagonal = [self.board[row_idx + i][col_idx + i]
+                         for i in range(-start_offset, end_offset + 1)]
+        start_pos = (col_idx - start_offset, row_idx - start_offset)
+        end_pos = (col_idx + end_offset - 1, row_idx + end_offset - 1)
+        words.extend(self.search_list(main_diagonal, start_offset,
+                     self.min_word_length, start_pos, end_pos))
 
         # up-left words
-        anti_diagonal = [self.board[row_idx + i][col_idx - i] for i in range(max(
-            0 - row_idx, col_idx - self.width + 1), min(self.height - row_idx, col_idx + 1))]
-        score += self.score_list(anti_diagonal, min(row_idx,
-                                 self.width - col_idx - 1), self.min_word_length)
+        start_offset = min(row_idx, self.width - col_idx - 1)
+        for i in range(1, start_offset + 1):
+            if self.board[row_idx - i][col_idx + i] == "*":
+                start_offset = i - 1
+                break
 
-        return score
+        end_offset = min(self.height - row_idx - 1, col_idx)
+        for i in range(1, end_offset + 1):
+            if self.board[row_idx + i][col_idx - i] == "*":
+                end_offset = i - 1
+                break
+
+        anti_diagonal = [self.board[row_idx + i][col_idx - i]
+                         for i in range(-start_offset, end_offset + 1)]
+        start_pos = (col_idx + start_offset, row_idx - start_offset)
+        end_pos = (col_idx - end_offset + 1, row_idx + end_offset - 1)
+        words.extend(self.search_list(anti_diagonal, start_offset,
+                     self.min_word_length, start_pos, end_pos))
+
+        return words
 
     def get_game_state(self):
         """
@@ -226,10 +419,12 @@ class Game:
             (int): 0 if game is not over, 1 if player 1 wins, 2 if player 2 wins, 3 if tie
         """
 
-        # check for available columns
-        for col in range(self.width):
-            if self.board[-1][col] == '*' and self.letter_bag:
-                return 0
+        # check for remaingin tiles in tile rack
+        if self.rack_size != 0:
+            # check for available columns
+            for col in range(self.width):
+                if self.board[-1][col] == '*' and self.letter_bag:
+                    return 0
 
         # determine game result
         if self.p1_score > self.p2_score:
@@ -299,10 +494,3 @@ class Game:
         res += f'Player {self.turn + 1}\'s Turn\n\n'
 
         return res
-
-    # unused:
-    # def get_col(self, col_idx):
-    #     col = []
-    #     for row in self.board:
-    #         col.append(row[col_idx])
-    #     return col
