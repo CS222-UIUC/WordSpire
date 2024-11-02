@@ -17,7 +17,7 @@ default_letter_bag = ["A", "A", "A", "A", "A", "A", "A", "A", "A", "B", "B", "C"
 default_letter_values = {'A': 1, 'B': 3, 'C': 3, 'D': 2, 'E': 1, 'F': 4, 'G': 2, 'H': 4, 'I': 1,
                          'J': 8, 'K': 5, 'L': 1, 'M': 3, 'N': 1, 'O': 1, 'P': 3, 'Q': 10, 'R': 1,
                          'S': 1, 'T': 1, 'U': 1, 'V': 4, 'W': 4, 'X': 8, 'Y': 4, 'Z': 10}
-default_len_bonus = {4 : 0, 5 : 5, 6 : 10, 7 : 20, 8 : 30, 9 : 50, 10 : 100}
+default_len_bonus = {1 : 0, 2 : 0, 3 : 0, 4 : 0, 5 : 5, 6 : 10, 7 : 20, 8 : 30, 9 : 50, 10 : 100}
 
 # get word dictionary
 new_path = os.path.join(os.path.dirname(__file__), '..', 'misc', 'Collins Scrabble Words (2019) with definitions.txt')  # noqa
