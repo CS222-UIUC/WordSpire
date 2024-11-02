@@ -4,6 +4,7 @@ import io
 import sys
 import os
 import math
+from collections import defaultdict
 
 sys.path.append(os.path.abspath(os.path.join(
     os.path.dirname(__file__), '../misc')))
@@ -16,6 +17,7 @@ default_letter_bag = ["A", "A", "A", "A", "A", "A", "A", "A", "A", "B", "B", "C"
 default_letter_values = {'A': 1, 'B': 3, 'C': 3, 'D': 2, 'E': 1, 'F': 4, 'G': 2, 'H': 4, 'I': 1,
                          'J': 8, 'K': 5, 'L': 1, 'M': 3, 'N': 1, 'O': 1, 'P': 3, 'Q': 10, 'R': 1,
                          'S': 1, 'T': 1, 'U': 1, 'V': 4, 'W': 4, 'X': 8, 'Y': 4, 'Z': 10}
+default_len_bonus = {1 : 0, 2 : 0, 3 : 0, 4 : 0, 5 : 5, 6 : 10, 7 : 20, 8 : 30, 9 : 50, 10 : 100}
 
 # get word dictionary
 new_path = os.path.join(os.path.dirname(__file__), '..', 'misc', 'Collins Scrabble Words (2019) with definitions.txt')  # noqa
@@ -32,7 +34,8 @@ class Game:
     # all arguments have a default value but can be overwritten
     def __init__(self, board_size: tuple[int, int] = (7, 7), rack_size: int = 7,
                  letter_bag: list[str] = default_letter_bag, letter_values: dict[str, int] = default_letter_values,
-                 word_dictionary: dict[str, str] = default_word_dictionary, mode: str = "local_mult", min_word_length: int = 4):
+                 word_dictionary: dict[str, str] = default_word_dictionary, mode: str = "local_mult", min_word_length: int = 4,
+                 num_multipliers = 5, len_bonus = default_len_bonus):
         """
         Innitialization function
         Note: all arguments have a defualt value but can be overwritten
@@ -53,6 +56,11 @@ class Game:
         self.height = board_size[0]
         self.board = [["*" for i in range(self.width)]
                       for z in range(self.height)]
+        
+        self.bonus_squares = defaultdict(lambda : 1)
+        for i in range(num_multipliers):
+            self.bonus_squares[(random.randint(0, self.height - 1), random.randint(0, self.width - 1))] += 1
+        self.len_bonus = defaultdict(lambda : 100, len_bonus)
 
         # create random letter rack and shuffle letter bag
         shuffled_letters = letter_bag
@@ -170,7 +178,7 @@ class Game:
 
         return 1  # returns 1 error code for column full
 
-    def search_list(self, letters: list, key_idx: int, min_len: int, start_pos: tuple[int, int], end_pos: tuple[int, int]):
+    def search_list(self, letters: list, key_idx: int, min_len: int, start_pos: tuple[int, int], end_pos: tuple[int, int], bonus):
         """
         Finds all valid words and their definitions in a single row/list of characters
 
@@ -208,6 +216,9 @@ class Game:
                     score = 0
                     for letter in potential_word:
                         score += self.score_dict[letter]
+                    score *= bonus
+                    score += self.len_bonus[abs(end - start)]
+                    
                     words.append(
                         (potential_word, score, self.dict[potential_word], (word_start, word_end)))
 
@@ -221,6 +232,9 @@ class Game:
                     score = 0
                     for letter in potential_word:
                         score += self.score_dict[letter]
+                    score *= bonus
+                    score += self.len_bonus[abs(end - start)]
+
                     words.append(
                         (potential_word, score, self.dict[potential_word], (word_start, word_end)))
 
@@ -241,6 +255,7 @@ class Game:
         if origin == "*":
             return []
 
+        bonus = self.bonus_squares[(row_idx, col_idx)]
         words = []
 
         # horizontal words
@@ -261,7 +276,7 @@ class Game:
         start_pos = (col_idx - start_offset, row_idx)
         end_pos = (col_idx + end_offset - 1, row_idx)
         words.extend(self.search_list(row, start_offset,
-                     self.min_word_length, start_pos, end_pos))
+                     self.min_word_length, start_pos, end_pos, bonus))
 
         # vertical words
         start_offset = row_idx
@@ -281,7 +296,7 @@ class Game:
         start_pos = (col_idx, row_idx - start_offset)
         end_pos = (col_idx, row_idx + end_offset - 1)
         words.extend(self.search_list(col, start_offset,
-                     self.min_word_length, start_pos, end_pos))
+                     self.min_word_length, start_pos, end_pos, bonus))
 
         # up-right words
         start_offset = min(row_idx, col_idx)
@@ -301,7 +316,7 @@ class Game:
         start_pos = (col_idx - start_offset, row_idx - start_offset)
         end_pos = (col_idx + end_offset - 1, row_idx + end_offset - 1)
         words.extend(self.search_list(main_diagonal, start_offset,
-                     self.min_word_length, start_pos, end_pos))
+                     self.min_word_length, start_pos, end_pos, bonus))
 
         # up-left words
         start_offset = min(row_idx, self.width - col_idx - 1)
@@ -321,7 +336,7 @@ class Game:
         start_pos = (col_idx + start_offset, row_idx - start_offset)
         end_pos = (col_idx - end_offset + 1, row_idx + end_offset - 1)
         words.extend(self.search_list(anti_diagonal, start_offset,
-                     self.min_word_length, start_pos, end_pos))
+                     self.min_word_length, start_pos, end_pos, bonus))
 
         return words
 
@@ -387,7 +402,10 @@ class Game:
         res = 'Board:\n\n' + row_str + '\n'
         for i in range(self.height - 1, -1, -1):
             for j in range(self.width):
-                res += f'|  {self.board[i][j]}  '
+                if self.board[i][j] == "*" and self.bonus_squares[(i,j)] > 1:
+                    res += f'|  {self.bonus_squares[(i,j)]}  '
+                else:
+                    res += f'|  {self.board[i][j]}  '
             res += f'|\n{row_str}\n'
 
         # print column labels
