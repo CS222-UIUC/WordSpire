@@ -11,15 +11,16 @@ sys.path.append(os.path.abspath(os.path.join(
 
 from Back_end import *  # noqa
 
-# test speed/see what is slowest
-pr = cProfile.Profile()
-pr.enable()
+# # test speed/see what is slowest
+# pr = cProfile.Profile()
+# pr.enable()
 
-num_games = 1000
-print_enable = 0
+num_games = int(input('Enter number of games to simulate: '))
+print_enable = int(input('Enable printing (0, 1): '))
+mode = input('Enter gamemode (single, local_mult): ')
 
 for i in range(num_games):
-    game_instance = Game(min_word_length=4)
+    game_instance = Game(min_word_length=4, mode=mode)
 
     if (print_enable):
         print(game_instance)
@@ -40,16 +41,18 @@ for i in range(num_games):
         game_state = game_instance.get_game_state()
 
     if (print_enable):
-        if game_state == 1:
+        if mode == 'single':
+            print('Game over.')
+        elif game_state == 1:
             print('Player 1 wins.')
         elif game_state == 2:
             print('Player 2 wins.')
         else:
             print('Tie game.')
 
-pr.disable()
-pr.dump_stats('misc/stats_post_change')
-p = pstats.Stats('misc/stats_pre_change')
-p.strip_dirs().sort_stats(SortKey.TIME).print_stats(20)
-p = pstats.Stats('misc/stats_post_change')
-p.strip_dirs().sort_stats(SortKey.TIME).print_stats(20)
+# pr.disable()
+# pr.dump_stats('misc/stats_post_change')
+# p = pstats.Stats('misc/stats_pre_change')
+# p.strip_dirs().sort_stats(SortKey.TIME).print_stats(20)
+# p = pstats.Stats('misc/stats_post_change')
+# p.strip_dirs().sort_stats(SortKey.TIME).print_stats(20)
