@@ -241,7 +241,7 @@ class Game:
                 else:
                     for word in words:
                         score_gained += word[1]
-                        self.p2_score += word[1]
+                        self.p1_score += word[1]
 
                 # add turn to game history
                 turn = Turn(self.board, self.turn,
