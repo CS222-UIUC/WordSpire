@@ -28,92 +28,6 @@ with open(new_path, 'r') as file:
         default_word_dictionary[key.strip().upper()] = value.strip()
 
 
-class Turn:
-    def __init__(self, board: list[list[int]], turn: int, letter: str, letter_col: int,
-                 score_gained: int, words_formed: list[tuple[str, int, str, tuple[tuple[int, int], tuple[int, int]]]]):
-        """
-        Innitialization function
-
-        Args:
-            board (list): the game's board after this turn
-            turn (int): 0 if player 1's turn, 1 if player 2's turn
-            letter (str): player's chosen letter
-            letter_col (tuple): column of placed letter, 0-indexed
-            score_gained (int): player's increase in score from this turn
-            words_formed (list): list of words formed and related info
-
-        Return:
-            Void
-        """
-
-        # board attributes
-        self.height = len(board)
-        self.width = len(board[0])
-
-        # store turn attributes
-        self.board = [[item for item in board[i]] for i in range(self.height)]
-        self.turn = turn
-        self.letter = letter
-        self.letter_col = letter_col
-        self.score_gained = score_gained
-        self.words_formed = words_formed
-
-        # create board with highlighted words
-        for word in words_formed:
-            start_pos = word[3][0]
-            end_pos = word[3][1]
-            col_dir = int(math.copysign(
-                1, end_pos[0] - start_pos[0])) if end_pos[0] - start_pos[0] != 0 else 0
-            row_dir = int(math.copysign(
-                1, end_pos[1] - start_pos[1])) if end_pos[1] - start_pos[1] != 0 else 0
-            for i in range(len(word[0])):
-                row, col = start_pos[1] + i * \
-                    row_dir, start_pos[0] + i * col_dir
-                self.board[row][col] = f'{
-                    bcolors.OKBLUE}{self.board[row][col]}{bcolors.ENDC}'
-
-    def __str__(self):
-        """
-        Function to define string representation of Turn object
-
-        The string representation states whose turn it is, the placed letter,
-        the column of the letter, the change in score, and the words formed
-
-        The board after this turn was played is also shown
-
-        Return:
-            res (string): String representation of the attributes stated above
-        """
-
-        # print board
-        row_str = '+'
-        for i in range(self.width):
-            row_str += '-----+'
-
-        res = 'Board:\n\n' + row_str + '\n'
-        for i in range(self.height - 1, -1, -1):
-            for j in range(self.width):
-                res += f'|  {self.board[i][j]}  '
-            res += f'|\n{row_str}\n'
-
-        # print column labels
-        res += '   '
-        for i in range(self.width):
-            res += f'{i + 1}     '
-
-        # print turn information
-        res += f"""\n\nPlayer {self.turn + 1} placed the letter \'{
-            self.letter}\' in column {self.letter_col + 1}.\n\n"""
-
-        if self.words_formed:
-            res += f"""Player {self.turn + 1} gained {
-                self.score_gained} score through the following words:\n"""
-            for word in self.words_formed:
-                res += f'   {word[0]} (+{word[1]})\n'
-
-        return res + '\n'
-
-
 class Game:
     # all arguments have a default value but can be overwritten
     def __init__(self, board_size: tuple[int, int] = (7, 7), rack_size: int = 7,
@@ -415,6 +329,9 @@ class Game:
         """
         Function to determine the current state of the game
 
+        Note:
+            If the gamemode is single-player, return 1 when the game is over.
+
         Return:
             (int): 0 if game is not over, 1 if player 1 wins, 2 if player 2 wins, 3 if tie
         """
@@ -427,7 +344,7 @@ class Game:
                     return 0
 
         # determine game result
-        if self.p1_score > self.p2_score:
+        if self.p1_score > self.p2_score or self.mode == 'single':
             return 1
         elif self.p2_score > self.p1_score:
             return 2
@@ -487,10 +404,104 @@ class Game:
             res += f'{i + 1}    '
 
         # print scores
-        res += f'\n\nPlayer 1 Score: {self.p1_score}\n'
-        res += f'Player 2 Score: {self.p2_score}\n\n'
+        if self.mode == 'single':
+            res += f'\n\nScore: {self.p1_score}\n'
+        elif self.mode == 'local_mult':
+            res += f'\n\nPlayer 1 Score: {self.p1_score}\n'
+            res += f'Player 2 Score: {self.p2_score}\n\n'
 
         # print current player's turn
-        res += f'Player {self.turn + 1}\'s Turn\n\n'
+        if self.mode == 'local_mult':
+            res += f'Player {self.turn + 1}\'s Turn\n\n'
 
         return res
+
+
+class Turn:
+    def __init__(self, board: list[list[int]], turn: int, letter: str, letter_col: int,
+                 score_gained: int, words_formed: list[tuple[str, int, str, tuple[tuple[int, int], tuple[int, int]]]]):
+        """
+        Innitialization function
+
+        Args:
+            board (list): the game's board after this turn
+            turn (int): 0 if player 1's turn, 1 if player 2's turn
+            letter (str): player's chosen letter
+            letter_col (tuple): column of placed letter, 0-indexed
+            score_gained (int): player's increase in score from this turn
+            words_formed (list): list of words formed and related info
+
+        Return:
+            Void
+        """
+
+        # board attributes
+        self.height = len(board)
+        self.width = len(board[0])
+
+        # store turn attributes
+        self.board = [[item for item in board[i]] for i in range(self.height)]
+        self.turn = turn
+        self.letter = letter
+        self.letter_col = letter_col
+        self.score_gained = score_gained
+        self.words_formed = words_formed
+
+        # create board with highlighted words
+        color = bcolors.OKBLUE
+        if turn:
+            color = bcolors.OKGREEN
+
+        for word in words_formed:
+            start_pos = word[3][0]
+            end_pos = word[3][1]
+            col_dir = int(math.copysign(
+                1, end_pos[0] - start_pos[0])) if end_pos[0] - start_pos[0] != 0 else 0
+            row_dir = int(math.copysign(
+                1, end_pos[1] - start_pos[1])) if end_pos[1] - start_pos[1] != 0 else 0
+            for i in range(len(word[0])):
+                row, col = start_pos[1] + i * \
+                    row_dir, start_pos[0] + i * col_dir
+                self.board[row][col] = f'{
+                    color}{self.board[row][col]}{bcolors.ENDC}'
+
+    def __str__(self):
+        """
+        Function to define string representation of Turn object
+
+        The string representation states whose turn it is, the placed letter,
+        the column of the letter, the change in score, and the words formed
+
+        The board after this turn was played is also shown
+
+        Return:
+            res (string): String representation of the attributes stated above
+        """
+
+        # print board
+        row_str = '+'
+        for i in range(self.width):
+            row_str += '-----+'
+
+        res = 'Board:\n\n' + row_str + '\n'
+        for i in range(self.height - 1, -1, -1):
+            for j in range(self.width):
+                res += f'|  {self.board[i][j]}  '
+            res += f'|\n{row_str}\n'
+
+        # print column labels
+        res += '   '
+        for i in range(self.width):
+            res += f'{i + 1}     '
+
+        # print turn information
+        res += f"""\n\nPlayer {self.turn + 1} placed the letter \'{
+            self.letter}\' in column {self.letter_col + 1}.\n\n"""
+
+        if self.words_formed:
+            res += f"""Player {self.turn + 1} gained {
+                self.score_gained} score through the following words:\n"""
+            for word in self.words_formed:
+                res += f'   {word[0]} (+{word[1]})\n'
+
+        return res + '\n'

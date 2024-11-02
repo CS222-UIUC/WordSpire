@@ -8,12 +8,9 @@ sys.path.append(os.path.abspath(os.path.join(
 
 from Back_end import *  # noqa
 
-print_enable = 0
+mode = input('Enter gamemode (single, local_mult): ')
 
-game_instance = Game(min_word_length=4)
-
-if (print_enable):
-    print(game_instance)
+game_instance = Game(min_word_length=4, mode=mode)
 
 game_state = 0
 
@@ -25,20 +22,18 @@ while game_state == 0:
 
     game_instance.place_piece(rand_rack_index, available_columns[rand_col])
 
-    if (print_enable):
-        print(game_instance)
-
     game_state = game_instance.get_game_state()
-
-if (print_enable):
-    if game_state == 1:
-        print('Player 1 wins.')
-    elif game_state == 2:
-        print('Player 2 wins.')
-    else:
-        print('Tie game.')
 
 # look at game history
 for turn in game_instance.game_history:
     if turn.score_gained > 0:
         print(turn)
+
+scores = game_instance.get_scores()
+
+if mode == 'single':
+    print(f'Final score: {scores[0]}')
+elif mode == 'local_mult':
+    print('Final scores: ')
+    print(f'   Player 1: {scores[0]}')
+    print(f'   Player 2: {scores[1]}')
