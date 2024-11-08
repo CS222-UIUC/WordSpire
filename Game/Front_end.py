@@ -22,7 +22,7 @@ tile_images = list()
 for letter in string.ascii_lowercase:
     uc_letter = letter.upper()
     alphabet.append(uc_letter)
-    file_name = os.path.join(os.path.dirname(__file__), '..', 'misc', 'scrabble_tiles', letter + '.png')
+    file_name = os.path.join(os.path.dirname(__file__), 'misc', 'scrabble_tiles', letter + '.png')
     
     # Check if the file exists
     if not os.path.exists(file_name):

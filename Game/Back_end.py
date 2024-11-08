@@ -6,8 +6,7 @@ import os
 import math
 from collections import defaultdict
 
-sys.path.append(os.path.abspath(os.path.join(
-    os.path.dirname(__file__), '../misc')))
+sys.path.append(os.path.join(os.path.dirname(__file__), 'misc'))
 
 from console_text import bcolors  # noqa
 
@@ -20,7 +19,7 @@ default_letter_values = {'A': 1, 'B': 3, 'C': 3, 'D': 2, 'E': 1, 'F': 4, 'G': 2,
 default_len_bonus = {1 : 0, 2 : 0, 3 : 0, 4 : 0, 5 : 5, 6 : 10, 7 : 20, 8 : 30, 9 : 50, 10 : 100}
 
 # get word dictionary
-new_path = os.path.join(os.path.dirname(__file__), '..', 'misc', 'Collins Scrabble Words (2019) with definitions.txt')  # noqa
+new_path = os.path.join(os.path.dirname(__file__), 'misc', 'Collins Scrabble Words (2019) with definitions.txt')  # noqa
 default_word_dictionary = {}
 # open the file in read mode
 with open(new_path, 'r') as file:
