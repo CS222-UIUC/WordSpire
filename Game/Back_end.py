@@ -32,7 +32,7 @@ class Game:
     def __init__(self, board_size: tuple[int, int] = (7, 7), rack_size: int = 7,
                  letter_bag: list[str] = default_letter_bag, letter_values: dict[str, int] = default_letter_values,
                  word_dictionary: dict[str, str] = default_word_dictionary, mode: str = "local_mult", min_word_length: int = 4,
-                 num_multipliers=5, len_bonus=default_len_bonus):
+                 num_multipliers = 0, len_bonus=default_len_bonus):
         """
         Innitialization function
         Note: all arguments have a defualt value but can be overwritten
@@ -75,6 +75,10 @@ class Game:
         self.turn = False
         self.dict = word_dictionary
         self.score_dict = letter_values
+
+        #create bot
+        if self.mode == "vs_bot":
+            self.bot = min_max_bot(4, self.height, self.width, self.min_word_length, self.score_dict, self.dict)
 
         # game history (list of turns)
         self.game_history = []
@@ -169,7 +173,7 @@ class Game:
                 self.game_history.append(turn)
 
                 # change_turn
-                if self.mode == "local_mult" or self.mode == "online_mult":
+                if self.mode != "single" :
                     self.turn = not self.turn
 
                 return 0  # returns 0 as succeeded
@@ -378,6 +382,9 @@ class Game:
                 available_columns.append(i)
 
         return available_columns
+    
+    def get_best_move(self):
+        return self.bot.get_best_move(self.board, self.rack, self.letter_bag)
 
     def __str__(self):
         """
@@ -422,18 +429,18 @@ class Game:
         # print scores
         if self.mode == 'single':
             res += f'\n\nScore: {self.p1_score}\n'
-        elif self.mode == 'local_mult':
+        else:
             res += f'\n\nPlayer 1 Score: {self.p1_score}\n'
             res += f'Player 2 Score: {self.p2_score}\n\n'
 
         # print current player's turn
-        if self.mode == 'local_mult':
+        if self.mode != 'single':
             res += f'Player {self.turn + 1}\'s Turn\n\n'
 
         return res
 
 
-class min_max_bot:  # min_max bot
+class min_max_bot:  #min_max bot
     def __init__(self, max_depth, height, width, min_word_length, score_dictionary, word_dictionary):
         self.max_depth = max_depth
         self.height = height
@@ -442,22 +449,26 @@ class min_max_bot:  # min_max bot
         self.score_dict = score_dictionary
         self.word_dict = word_dictionary
 
-    def get_move(self, board, rack, bag):
+    def get_best_move(self, board, rack, bag):
         depth = min(self.max_depth, len(rack))
         val, move = self.simple_alphabeta(
-            board, rack, depth, -1 * math.inf, math.inf, True)
+            board, rack, 0, depth, -1 * math.inf, math.inf, True)
         return move
 
     def simple_alphabeta(self, board, rack, score, depth, a, b, maximizer):
         if depth == 0:
             return (score, (-1, -1))
-
+        
         available_columns = []
         for i in range(self.width):
             if board[-1][i] == '*':
                 available_columns.append(i)
 
-        move = (0, available_columns[0])
+        moves = []
+        
+        if not available_columns:
+            return (score, (-1, -1))
+        
         if maximizer:
             value = -1 * math.inf
             for col in available_columns:
@@ -468,11 +479,17 @@ class min_max_bot:  # min_max bot
                                                                 score + gained_score, depth - 1, a, b, False)
                     if curr_val > value:
                         value = curr_val
-                        move = curr_move
+                        moves = [(idx, col)]
+                    elif curr_val == value:
+                        moves.append((idx, col))
                     if value > b:
                         break
+                else:
                     a = max(a, value)
-            return (value, move)
+                    continue
+                break
+                    
+            return (value, random.choice(moves))
         else:
             value = math.inf
             for col in available_columns:
@@ -483,19 +500,26 @@ class min_max_bot:  # min_max bot
                                                                 score - gained_score, depth - 1, a, b, True)
                     if curr_val < value:
                         value = curr_val
-                        move = curr_move
+                        move = [(idx, col)]
+                    elif curr_val == value:
+                        moves.append((idx, col))
                     if value < a:
                         break
+                else:
                     b = min(b, value)
-            return (value, move)
+                    continue
+                break
+            
+            return (value, random.choice(move))
+        
 
     def update_board(self, board, letter, col_idx):
         board_copy = copy.deepcopy(board)
 
-        for row in board_copy:
+        for row_idx, row in enumerate(board_copy):
             if row[col_idx] == "*":
                 row[col_idx] = letter
-                return (board_copy, self.get_score(board, row, col_idx))
+                return (board_copy, self.get_score(board, row_idx, col_idx))
 
         raise Exception("Illegal move, column full.")
 
