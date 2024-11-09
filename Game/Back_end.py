@@ -13,7 +13,8 @@ default_letter_bag = ["A", "A", "A", "A", "A", "A", "A", "A", "A", "B", "B", "C"
 default_letter_values = {'A': 1, 'B': 3, 'C': 3, 'D': 2, 'E': 1, 'F': 4, 'G': 2, 'H': 4, 'I': 1,
                          'J': 8, 'K': 5, 'L': 1, 'M': 3, 'N': 1, 'O': 1, 'P': 3, 'Q': 10, 'R': 1,
                          'S': 1, 'T': 1, 'U': 1, 'V': 4, 'W': 4, 'X': 8, 'Y': 4, 'Z': 10}
-default_len_bonus = {1 : 0, 2 : 0, 3 : 0, 4 : 0, 5 : 5, 6 : 10, 7 : 20, 8 : 30, 9 : 50, 10 : 100}
+default_len_bonus = {1: 0, 2: 0, 3: 0, 4: 0,
+                     5: 5, 6: 10, 7: 20, 8: 30, 9: 50, 10: 100}
 
 # get word dictionary
 new_path = os.path.join(os.path.dirname(__file__), 'misc', 'Collins Scrabble Words (2019) with definitions.txt')  # noqa
@@ -31,7 +32,7 @@ class Game:
     def __init__(self, board_size: tuple[int, int] = (7, 7), rack_size: int = 7,
                  letter_bag: list[str] = default_letter_bag, letter_values: dict[str, int] = default_letter_values,
                  word_dictionary: dict[str, str] = default_word_dictionary, mode: str = "local_mult", min_word_length: int = 4,
-                 num_multipliers = 5, len_bonus = default_len_bonus):
+                 num_multipliers=5, len_bonus=default_len_bonus):
         """
         Innitialization function
         Note: all arguments have a defualt value but can be overwritten
@@ -52,11 +53,12 @@ class Game:
         self.height = board_size[0]
         self.board = [["*" for i in range(self.width)]
                       for z in range(self.height)]
-        
-        self.bonus_squares = defaultdict(lambda : 1)
+
+        self.bonus_squares = defaultdict(lambda: 1)
         for i in range(num_multipliers):
-            self.bonus_squares[(random.randint(0, self.height - 1), random.randint(0, self.width - 1))] += 1
-        self.len_bonus = defaultdict(lambda : 100, len_bonus)
+            self.bonus_squares[(random.randint(
+                0, self.height - 1), random.randint(0, self.width - 1))] += 1
+        self.len_bonus = defaultdict(lambda: 100, len_bonus)
 
         # create random letter rack and shuffle letter bag
         shuffled_letters = letter_bag
@@ -214,7 +216,7 @@ class Game:
                         score += self.score_dict[letter]
                     score *= bonus
                     score += self.len_bonus[abs(end - start)]
-                    
+
                     words.append(
                         (potential_word, score, self.dict[potential_word], (word_start, word_end)))
 
@@ -398,8 +400,8 @@ class Game:
         res = 'Board:\n\n' + row_str + '\n'
         for i in range(self.height - 1, -1, -1):
             for j in range(self.width):
-                if self.board[i][j] == "*" and self.bonus_squares[(i,j)] > 1:
-                    res += f'|  {self.bonus_squares[(i,j)]}  '
+                if self.board[i][j] == "*" and self.bonus_squares[(i, j)] > 1:
+                    res += f'|  {self.bonus_squares[(i, j)]}  '
                 else:
                     res += f'|  {self.board[i][j]}  '
             res += f'|\n{row_str}\n'
@@ -430,55 +432,73 @@ class Game:
 
         return res
 
-class min_max_bot: #min_max bot
-    def __init__(self, max_depth):
+
+class min_max_bot:  # min_max bot
+    def __init__(self, max_depth, height, width, min_word_length, score_dictionary, word_dictionary):
         self.max_depth = max_depth
+        self.height = height
+        self.width = width
+        self.min_word_length = min_word_length
+        self.score_dict = score_dictionary
+        self.word_dict = word_dictionary
 
     def get_move(self, board, rack, bag):
-        val, move = self.simple_alphabeta(board, rack, 100, -1 * math.inf, math.inf, True)
+        depth = min(self.max_depth, len(rack))
+        val, move = self.simple_alphabeta(
+            board, rack, depth, -1 * math.inf, math.inf, True)
         return move
 
-    def simple_alphabeta(self, board, rack, depth, a, b, maximizer):
-        if depth == 0 or len(rack) == 0:
-            return self.get_score(board)
-        
+    def simple_alphabeta(self, board, rack, score, depth, a, b, maximizer):
+        if depth == 0:
+            return (score, (-1, -1))
+
         available_columns = []
         for i in range(self.width):
-            if self.board[-1][i] == '*':
+            if board[-1][i] == '*':
                 available_columns.append(i)
-        
+
+        move = (0, available_columns[0])
         if maximizer:
             value = -1 * math.inf
             for col in available_columns:
                 for idx, letter in enumerate(rack):
-                    new_board = self.place_piece(board, rack, idx, col)
-                    value, move = max(value, self.simple_alphabeta(new_board, (rack[:idx] + rack[idx+1:]), depth - 1, a, b, False))
+                    new_board, gained_score = self.update_board(
+                        board, letter, col)
+                    curr_val, curr_move = self.simple_alphabeta(new_board, (rack[:idx] + rack[idx+1:]),
+                                                                score + gained_score, depth - 1, a, b, False)
+                    if curr_val > value:
+                        value = curr_val
+                        move = curr_move
                     if value > b:
                         break
                     a = max(a, value)
-            return (value, (idx, col))
+            return (value, move)
         else:
             value = math.inf
             for col in available_columns:
                 for idx, letter in enumerate(rack):
-                    new_board = self.place_piece(board, rack, idx, col)
-                    value = max(value, self.simple_alphabeta(new_board, (rack[:idx] + rack[idx+1:]), depth - 1, a, b, True))
+                    new_board, gained_score = self.update_board(
+                        board, letter, col)
+                    curr_val, curr_move = self.simple_alphabeta(new_board, (rack[:idx] + rack[idx+1:]),
+                                                                score - gained_score, depth - 1, a, b, True)
+                    if curr_val < value:
+                        value = curr_val
+                        move = curr_move
                     if value < a:
                         break
                     b = min(b, value)
-            return (value, (idx, col))
-        
-    def place_piece(self, board, rack, rack_idx, col_idx):
+            return (value, move)
+
+    def update_board(self, board, letter, col_idx):
         board_copy = copy.deepcopy(board)
 
         for row in board_copy:
             if row[col_idx] == "*":
-                row[col_idx] = rack[rack_idx]
-        
-        return board_copy
-        
+                row[col_idx] = letter
+                return (board_copy, self.get_score(board, row, col_idx))
 
-    
+        raise Exception("Illegal move, column full.")
+
     def score_list(self, letters: list, key_idx: int, min_len: int):
         """
         Scores all valid words in a single row/list of characters
@@ -502,22 +522,21 @@ class min_max_bot: #min_max bot
                 potential_word = ltrs_string[start:end]
 
                 # forward
-                if potential_word in self.dict:
+                if potential_word in self.word_dict:
                     # score per letter in word
                     for letter in potential_word:
                         score += self.score_dict[letter]
 
                 # backward
                 potential_word = potential_word[::-1]
-                if potential_word in self.dict:
+                if potential_word in self.word_dict:
                     # score per letter in word
                     for letter in potential_word:
                         score += self.score_dict[letter]
 
         return score
 
-
-    def get_score(self, row_idx: int, col_idx: int):
+    def get_score(self, board, row_idx: int, col_idx: int):
         """
         Scores a move that places a tile
 
@@ -528,7 +547,7 @@ class min_max_bot: #min_max bot
             words (list((string, string))): list of words and their definitions as tuple pairs
         """
 
-        origin = self.board[row_idx][col_idx]
+        origin = board[row_idx][col_idx]
         if origin == "*":
             return 0
 
@@ -537,81 +556,82 @@ class min_max_bot: #min_max bot
         # horizontal words
         start_offset = col_idx
         for i in range(1, start_offset + 1):
-            if self.board[row_idx][col_idx - i] == "*":
+            if board[row_idx][col_idx - i] == "*":
                 start_offset = i - 1
                 break
 
         end_offset = self.width - col_idx
         for i in range(1, end_offset):
-            if self.board[row_idx][col_idx + i] == "*":
+            if board[row_idx][col_idx + i] == "*":
                 end_offset = i - 1
                 break
 
-        row = self.board[row_idx][col_idx - start_offset: col_idx + end_offset]
-        score += self.search_list(row, start_offset, self.min_word_length)
+        row = board[row_idx][col_idx - start_offset: col_idx + end_offset]
+        score += self.score_list(row, start_offset, self.min_word_length)
 
         # vertical words
         start_offset = row_idx
         for i in range(1, start_offset + 1):
-            if self.board[row_idx - i][col_idx] == "*":
+            if board[row_idx - i][col_idx] == "*":
                 start_offset = i - 1
                 break
 
         end_offset = self.height - row_idx
         for i in range(1, end_offset):
-            if self.board[row_idx + i][col_idx] == "*":
+            if board[row_idx + i][col_idx] == "*":
                 end_offset = i - 1
                 break
 
-        col = [self.board[row_idx + row][col_idx]
-            for row in range(-start_offset, end_offset)]
-        score += self.search_list(col, start_offset, self.min_word_length)
+        col = [board[row_idx + row][col_idx]
+               for row in range(-start_offset, end_offset)]
+        score += self.score_list(col, start_offset, self.min_word_length)
 
         # up-right words
         start_offset = min(row_idx, col_idx)
         for i in range(1, start_offset + 1):
-            if self.board[row_idx - i][col_idx - i] == "*":
+            if board[row_idx - i][col_idx - i] == "*":
                 start_offset = i - 1
                 break
 
         end_offset = min(self.height - row_idx, self.width - col_idx)
         for i in range(1, end_offset):
-            if self.board[row_idx + i][col_idx + i] == "*":
+            if board[row_idx + i][col_idx + i] == "*":
                 end_offset = i - 1
                 break
 
-        main_diagonal = [self.board[row_idx + i][col_idx + i]
-                        for i in range(-start_offset, end_offset)]
-        score += self.search_list(main_diagonal,
-                                start_offset, self.min_word_length)
+        main_diagonal = [board[row_idx + i][col_idx + i]
+                         for i in range(-start_offset, end_offset)]
+        score += self.score_list(main_diagonal,
+                                 start_offset, self.min_word_length)
 
         # up-left words
         start_offset = min(row_idx, self.width - col_idx - 1)
         for i in range(1, start_offset + 1):
-            if self.board[row_idx - i][col_idx + i] == "*":
+            if board[row_idx - i][col_idx + i] == "*":
                 start_offset = i - 1
                 break
 
         end_offset = min(self.height - row_idx, col_idx + 1)
         for i in range(1, end_offset):
-            if self.board[row_idx + i][col_idx - i] == "*":
+            if board[row_idx + i][col_idx - i] == "*":
                 end_offset = i - 1
                 break
 
-        anti_diagonal = [self.board[row_idx + i][col_idx - i]
-                        for i in range(-start_offset, end_offset)]
-        score += self.search_list(anti_diagonal,
-                                start_offset, self.min_word_length)
+        anti_diagonal = [board[row_idx + i][col_idx - i]
+                         for i in range(-start_offset, end_offset)]
+        score += self.score_list(anti_diagonal,
+                                 start_offset, self.min_word_length)
 
         return score
 
 
-class torch_bot: #pytorch based bot (maybe)
+class torch_bot:  # pytorch based bot (maybe)
     def __init__(self):
         pass
-    
+
     def get_move(self, board, rack, bag):
-        return (0,0)
+        return (0, 0)
+
 
 class bcolors:
     HEADER = '\033[95m'
@@ -623,6 +643,7 @@ class bcolors:
     ENDC = '\033[0m'
     BOLD = '\033[1m'
     UNDERLINE = '\033[4m'
+
 
 class Turn:
     def __init__(self, board: list[list[int]], turn: int, letter: str, letter_col: int,
