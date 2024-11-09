@@ -4,6 +4,7 @@ import io
 import sys
 import os
 import math
+import copy
 from collections import defaultdict
 
 # default letters and their value
@@ -434,7 +435,49 @@ class min_max_bot: #min_max bot
         self.max_depth = max_depth
 
     def get_move(self, board, rack, bag):
-        return (0,0)
+        val, move = self.simple_alphabeta(board, rack, 100, -1 * math.inf, math.inf, True)
+        return move
+
+    def simple_alphabeta(self, board, rack, depth, a, b, maximizer):
+        if depth == 0 or len(rack) == 0:
+            return self.get_score(board)
+        
+        available_columns = []
+        for i in range(self.width):
+            if self.board[-1][i] == '*':
+                available_columns.append(i)
+        
+        if maximizer:
+            value = -1 * math.inf
+            for col in available_columns:
+                for idx, letter in enumerate(rack):
+                    new_board = self.place_piece(board, rack, idx, col)
+                    value, move = max(value, self.simple_alphabeta(new_board, (rack[:idx] + rack[idx+1:]), depth - 1, a, b, False))
+                    if value > b:
+                        break
+                    a = max(a, value)
+            return (value, (idx, col))
+        else:
+            value = math.inf
+            for col in available_columns:
+                for idx, letter in enumerate(rack):
+                    new_board = self.place_piece(board, rack, idx, col)
+                    value = max(value, self.simple_alphabeta(new_board, (rack[:idx] + rack[idx+1:]), depth - 1, a, b, True))
+                    if value < a:
+                        break
+                    b = min(b, value)
+            return (value, (idx, col))
+        
+    def place_piece(self, board, rack, rack_idx, col_idx):
+        board_copy = copy.deepcopy(board)
+
+        for row in board_copy:
+            if row[col_idx] == "*":
+                row[col_idx] = rack[rack_idx]
+        
+        return board_copy
+        
+
     
     def score_list(self, letters: list, key_idx: int, min_len: int):
         """
