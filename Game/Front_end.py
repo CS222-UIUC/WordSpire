@@ -9,12 +9,14 @@ import Back_end
 BLUE = (0, 0, 255)
 BLACK = (0, 0, 0)
 RED = (255, 0, 0)
-YELLOW = (255, 255, 0)
 WHITE = (255, 255, 255)
 GREEN = (0, 255, 0)
 DARK_BROWN = (92, 64, 51)
 DARK_GRAY = (83, 83, 83)
 LIGHT_GRAY = (105, 105, 105)
+PURPLE = (91, 17, 102)
+YELLOW = (254, 221, 86)
+OFF_WHITE = (237, 237, 237)
 
 # Load tile images
 alphabet = list()
@@ -31,6 +33,13 @@ for letter in string.ascii_lowercase:
     tile_images.append(file_name)
 letter_dict = dict(zip(alphabet, tile_images)) # Dictionary mapping letters to their tile_image pathnames
 
+# Load audio files
+tile_drop_sound = os.path.join(os.path.dirname(__file__), '..', 'misc', 'sounds', 'click.mp3')
+winner_sound = os.path.join(os.path.dirname(__file__), '..', 'misc', 'sounds', 'winner.mp3')
+score_point_sound = os.path.join(os.path.dirname(__file__), '..', 'misc', 'sounds', 'score.mp3')
+button_press_sound = os.path.join(os.path.dirname(__file__), '..', 'misc', 'sounds', 'button_press.mp3')
+error_sound = os.path.join(os.path.dirname(__file__), '..', 'misc', 'sounds', 'error.mp3')
+
 # Create game object and get board info
 curr_game = Back_end.Game()
 board_list = curr_game.get_board() # gets the current board state, which is a 2D array of strings
@@ -46,8 +55,15 @@ height = (row_size + 1) * square_size #height +1 row for game piece?
 size = (width, height) #size of the screen with extra space on top 
 turn = curr_game.get_turn()
 
+scr_color = BLACK
+txt_color = WHITE
+bttn_color = GREEN
+bttn_txt_color = BLACK
+board_color = DARK_BROWN
+
 # Initialize Pygame and display screen
 pygame.init()
+pygame.mixer.init()
 screen = pygame.display.set_mode(size) #gives the screen size of the game board
 
 def print_board(board):
@@ -72,9 +88,9 @@ def draw_board(board):
     for column in range(column_size):
         for row in range(row_size):
             # Draw board
-            pygame.draw.rect(screen, DARK_BROWN, (column * square_size, row * square_size + square_size, square_size, square_size))
+            pygame.draw.rect(screen, board_color, (column * square_size, row * square_size + square_size, square_size, square_size))
             # Draw blank slots
-            pygame.draw.rect(screen, BLACK, (column * square_size + 10, (row + 1) * square_size + 10, square_size - 20, square_size - 20))
+            pygame.draw.rect(screen, scr_color, (column * square_size + 10, (row + 1) * square_size + 10, square_size - 20, square_size - 20))
     for column in range(column_size):
         for row in range(row_size):
             if board[row][column] != "*":
@@ -104,7 +120,7 @@ def display_start_menu():
     pygame.display.update()
     return start_button_rect
 
-def display_rack(curr_rack, selected=False):
+def display_rack(curr_rack, selected_idx):
     """
     Function to display rack screen, including player turn, rack tiles, two buttons, and scores
 
@@ -116,13 +132,13 @@ def display_rack(curr_rack, selected=False):
                                   tuples containing (image button, rack index)
     """
     # Returns a list of buttons starting with 'View Board', then 'Select Tile', then the letter tiles
-
+    curr_rack = curr_game.get_rack()
     # Display player turn
     font = pygame.font.Font('freesansbold.ttf', 48)
     if curr_game.get_turn():
-        text = font.render("Player 2's Turn", True, WHITE)
+        text = font.render("Player 2's Turn", True, txt_color)
     else:
-        text = font.render("Player 1's Turn", True, WHITE)
+        text = font.render("Player 1's Turn", True, txt_color)
     text_rect = text.get_rect()
     text_rect.center = (width / 2, 200)
     screen.blit(text, text_rect)
@@ -132,8 +148,8 @@ def display_rack(curr_rack, selected=False):
     p1_score, p2_score = curr_game.get_scores()
     p1_msg = "Player 1 Score: " + str(p1_score)
     p2_msg = "Player 2 Score: " + str(p2_score)
-    p1_text = font.render(p1_msg, True, WHITE)
-    p2_text = font.render(p2_msg, True, WHITE)
+    p1_text = font.render(p1_msg, True, txt_color)
+    p2_text = font.render(p2_msg, True, txt_color)
     p1_rect = p1_text.get_rect()
     p2_rect = p2_text.get_rect()
     p1_rect.center = (width / 4 - 50, height - 30)
@@ -145,18 +161,24 @@ def display_rack(curr_rack, selected=False):
 
     # Display a button that allows you to go back to board
     view_board_button_center = (width / 2 - 60, height / 2 + 200)
-    view_board_button_rect = create_text_button(view_board_button_center, "View Board", 16)
+    view_board_button_rect = create_text_button(view_board_button_center, "View Board", 16, text_color = bttn_txt_color, button_color = bttn_color)
     rack_menu_buttons.append(view_board_button_rect)
 
     # Display a 'Select Tile' button
-    if not selected:
-        place_button_center = (width / 2 - 60, height / 2 + 120)
+    place_button_center = (width / 2 - 60, height / 2 + 120)
+    if selected_idx < 0:
+        selected_msg = "No tile selected"
         place_button_rect = create_text_button(place_button_center, "Select Tile", 16, DARK_GRAY, LIGHT_GRAY)
         rack_menu_buttons.append(place_button_rect)
     else:
-        place_button_center = (width / 2 - 60, height / 2 + 120)
-        place_button_rect = create_text_button(place_button_center, "Select Tile", 16)
+        selected_msg = "Selected tile: " + str(curr_rack[selected_idx])
+        place_button_rect = create_text_button(place_button_center, "Select Tile", 16, text_color = bttn_txt_color, button_color = bttn_color)
         rack_menu_buttons.append(place_button_rect)
+
+    selected_text = font.render(selected_msg, True, txt_color)
+    selected_rect = selected_text.get_rect()
+    selected_rect.center = (width / 2, height / 2 + 80)
+    screen.blit(selected_text, selected_rect)
 
     # Load and display images for tiles
     for i, letter in enumerate(curr_rack):
@@ -199,18 +221,18 @@ def display_pause_menu():
     """
     # Display Pause Menu
     font = pygame.font.Font('freesansbold.ttf', 32)
-    text = font.render("Game Paused", True, WHITE)
+    text = font.render("Game Paused", True, txt_color)
     textRect = text.get_rect()
     textRect.center = (width / 2, height / 2 - 100)
     screen.blit(text, textRect)
 
     # Create Resume button
     resume_button_center = (width / 2 - 60, height / 2)
-    resume_button_rect = create_text_button(resume_button_center, "Resume", 26)
+    resume_button_rect = create_text_button(resume_button_center, "Resume", 26, text_color = bttn_txt_color, button_color = bttn_color)
 
     # Create Options button
     options_button_center = (width / 2 - 60, height / 2 + 70)
-    options_button_rect = create_text_button(options_button_center, "Options", 26)
+    options_button_rect = create_text_button(options_button_center, "Options", 26, text_color = bttn_txt_color, button_color = bttn_color)
 
     pygame.display.update()
     return resume_button_rect, options_button_rect
@@ -405,7 +427,7 @@ def display_game_over(game_state):
         return 0
     
     font = pygame.font.Font('freesansbold.ttf', 48)
-    text = font.render("Game Over", True, WHITE)
+    text = font.render("Game Over", True, txt_color)
     textRect = text.get_rect()
     textRect.center = (width / 2, height / 2 - 50)
     screen.blit(text, textRect)
@@ -414,8 +436,12 @@ def display_game_over(game_state):
     winning_text = "Player " + winning_player + " won!"
     if game_state == 1:
         color = BLUE
+        sound = pygame.mixer.Sound(winner_sound)
+        sound.play()
     elif game_state == 2:
         color = RED
+        sound = pygame.mixer.Sound(winner_sound)
+        sound.play()
     else:
         color = GREEN
         winning_text = "It's a tie!"
@@ -426,14 +452,32 @@ def display_game_over(game_state):
     screen.blit(text, textRect)
 
     restart_button_center = (width / 2 - 60, height / 2 + 20)
-    restart_button_rect = create_text_button(restart_button_center, message = "Restart")
+    restart_button_rect = create_text_button(restart_button_center, message = "Restart", text_color = bttn_txt_color, button_color = bttn_color)
 
     quit_button_center = (width / 2 - 60, height / 2 + 100)
-    quit_button_rect = create_text_button(quit_button_center, message = "Quit")
+    quit_button_rect = create_text_button(quit_button_center, message = "Quit", text_color = bttn_txt_color, button_color = bttn_color)
 
     pygame.display.update()
 
     return restart_button_rect, quit_button_rect
+
+def display_mode_selection(screen_mode = "", num_players = -1):
+    # want light mode button, dark mode button, singleplayer, multiplayer, and a start button (5 buttons)
+    screen.fill(scr_color)
+    dark_button_center = (width / 3 - 90, height / 5)
+    light_button_center = (width * 2 / 3 - 90, height / 5)
+    dark_button_rect = create_text_button(dark_button_center, message = "Dark Mode", text_color = WHITE, button_color = PURPLE, size = (180, 50))
+    light_button_rect = create_text_button(light_button_center, message = "Light Mode", text_color = WHITE, button_color = YELLOW, size = (180, 50))
+
+    one_player_center = (width / 3 - 90, height / 2)
+    two_players_center = (width * 2 / 3 - 90, height / 2)
+    one_player_button_rect = create_text_button(one_player_center, message = "1 Player", text_color = bttn_txt_color, button_color = bttn_color, size = (180, 50))
+    two_players_button_rect = create_text_button(two_players_center, message = "2 Players", text_color = bttn_txt_color, button_color = bttn_color, size = (180, 50))
+
+    ok_button_center = (width / 2 - 60, height * 3 / 4)
+    ok_button_rect = create_text_button(ok_button_center, message = "Okay", text_color = bttn_txt_color, button_color = bttn_color)
+    pygame.display.update()
+    return dark_button_rect, light_button_rect, one_player_button_rect, two_players_button_rect, ok_button_rect
 
 
 # Draw the board
@@ -455,6 +499,10 @@ displaying_words_menu = False
 col_idx = -1
 row_idx = -1
 word_idx = 0
+scores = curr_game.get_scores()
+end_screen_displayed = False
+mode = ""
+num_players = 0
 
 #check to make sure the game is not over yet 
 while True:
@@ -469,16 +517,46 @@ while True:
             if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                 mouse_pos = event.pos
                 if start_button_rect.collidepoint(mouse_pos):
+                    sound = pygame.mixer.Sound(button_press_sound)
+                    sound.play()
                     game_started = True
-                    screen.fill(BLACK)
-                    draw_board(board)
+                    screen.fill(scr_color)
                     continue
                 continue
+        if game_started and (mode == "" or num_players == 0):
+            dark_button_rect, light_button_rect, one_player_button_rect, two_players_button_rect, ok_button_rect = display_mode_selection()
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                mouse_pos = event.pos
+                if dark_button_rect.collidepoint(mouse_pos):
+                    scr_color = BLACK
+                    txt_color = WHITE
+                    bttn_color = GREEN
+                    bttn_txt_color = BLACK
+                    board_color = DARK_BROWN
+                    mode = "dark"
+                    display_mode_selection(screen_mode = mode)
+                elif light_button_rect.collidepoint(mouse_pos):
+                    scr_color = OFF_WHITE
+                    txt_color = BLACK
+                    bttn_color = BLUE
+                    bttn_txt_color = WHITE
+                    board_color = BLACK
+                    mode = "light"
+                    display_mode_selection(screen_mode = mode)
+                if mode != "":
+                   if ok_button_rect.collidepoint(mouse_pos):
+                       num_players = 2
+                       draw_board(board)
+                continue
         if game_over > 0:
-            restart_button_rect, quit_button_rect = display_game_over(game_over)
+            screen.fill(scr_color)
+            if not end_screen_displayed:
+                restart_button_rect, quit_button_rect = display_game_over(game_over)
+                end_screen_displayed = True
             if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                 mouse_pos = event.pos
                 if restart_button_rect.collidepoint(mouse_pos):
+                    sound = pygame.mixer.Sound(button_press_sound)
                     curr_game = Back_end.Game()
                     board_list = curr_game.get_board() # gets the current board state, which is a 2D array of strings
                     board = np.array(board_list)
@@ -487,9 +565,15 @@ while True:
                     game_over = curr_game.get_game_state()
                     turn = curr_game.get_turn()
                     game_started = False
-                    screen.fill(BLACK)
+                    end_screen_displayed = False
+                    screen.fill(scr_color)
+                    displaying_words = False
+                    displaying_words_menu = False
                     start_button_rect = display_start_menu()
+                    continue
                 elif quit_button_rect.collidepoint(mouse_pos):
+                    sound = pygame.mixer.Sound(button_press_sound)
+                    sound.play()
                     sys.exit()
                 else:
                     continue
@@ -506,6 +590,8 @@ while True:
             if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                 mouse_pos = event.pos
                 if x_button_rect.collidepoint(mouse_pos):
+                    sound = pygame.mixer.Sound(button_press_sound)
+                    sound.play()
                     word_idx = 0
                     displaying_words = False
                     displaying_words_menu = False
@@ -514,10 +600,14 @@ while True:
                 if len(buttons) > 1:
                     if left_button_rect.collidepoint(mouse_pos):
                         if word_idx > 0:
+                            sound = pygame.mixer.Sound(button_press_sound)
+                            sound.play()
                             word_idx -= 1
                             buttons = display_tile_definitions(col_idx, row_idx, word_idx)
                     if right_button_rect.collidepoint(mouse_pos):
                         if word_idx < num_words - 1:
+                            sound = pygame.mixer.Sound(button_press_sound)
+                            sound.play()
                             word_idx += 1
                             buttons = display_tile_definitions(col_idx, row_idx, word_idx)
                     continue
@@ -531,39 +621,52 @@ while True:
             if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                 mouse_pos = event.pos
                 if x_button_rect.collidepoint(mouse_pos):
+                    sound = pygame.mixer.Sound(button_press_sound)
+                    sound.play()
                     error_message = ""
                     error_message_drawn = False
                     draw_board(board)
                     continue
             else:
                 continue
-        if game_started and event.type == pygame.KEYDOWN:  # Go into pause menu
+        if game_started and not showing_rack and event.type == pygame.KEYDOWN:  # Go into pause menu
             if event.key == pygame.K_p:
-                screen.fill(BLACK)
+                sound = pygame.mixer.Sound(button_press_sound)
+                sound.play()
+                screen.fill(scr_color)
                 paused = True
                 resume_button_rect, options_button_rect = display_pause_menu()
             elif event.key == pygame.K_r:
-                screen.fill(BLACK)
+                sound = pygame.mixer.Sound(button_press_sound)
+                sound.play()
+                screen.fill(scr_color)
                 showing_rack = True
                 rack = curr_game.get_rack()
-                rack_menu_buttons = display_rack(rack, selected)
+                rack_menu_buttons = display_rack(rack, selected_idx)
                 view_board_button_rect = rack_menu_buttons[0]
                 select_button_rect = rack_menu_buttons[1]
         if paused:  # Display pause menu
             if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                     mouse_pos = event.pos
                     if resume_button_rect.collidepoint(mouse_pos):
+                        sound = pygame.mixer.Sound(button_press_sound)
+                        sound.play()
                         paused = False
                         draw_board(board)
                         continue
                     elif options_button_rect.collidepoint(mouse_pos):
+                        sound = pygame.mixer.Sound(button_press_sound)
+                        sound.play()
                         # Do nothing for now when player presses the 'Options' button
                         pass
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
+                    sound = pygame.mixer.Sound(button_press_sound)
+                    sound.play()
                     paused = False
                     draw_board(board)
                     continue
+            continue
         if showing_rack:
             if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                     mouse_pos = event.pos
@@ -572,49 +675,82 @@ while True:
                         if tile_button_rect.collidepoint(mouse_pos):
                             tmp_selected = True
                             tmp_selected_idx = rack_idx
-                            rack_menu_buttons = display_rack(rack, tmp_selected)
+                            screen.fill(scr_color)
+                            rack_menu_buttons = display_rack(rack, tmp_selected_idx)
                             continue
                     if view_board_button_rect.collidepoint(mouse_pos):
+                        sound = pygame.mixer.Sound(button_press_sound)
+                        sound.play()
                         showing_rack = False
                         draw_board(board)
+                        tmp_selected = False
                         continue
                     elif tmp_selected and select_button_rect.collidepoint(mouse_pos):
+                        sound = pygame.mixer.Sound(button_press_sound)
+                        sound.play()
                         selected = tmp_selected
                         selected_idx = tmp_selected_idx
                         tmp_selected = False
                         tmp_selected_idx = -1
                         showing_rack = False
                         draw_board(board)
+                        pygame.draw.rect(screen, scr_color, (0, 0, width, square_size))
+                        rack = curr_game.get_rack()
+                        pos_x = event.pos[0]
+                        tile_image = load_tile_image(rack[selected_idx])
+                        tile_rect = tile_image.get_rect(center=(pos_x, square_size / 2))  # Adjust position as needed
+                        screen.blit(tile_image, tile_rect)
+                        pygame.display.update()
                         continue
                     else:
                         selected_idx = -1
                         continue
-        if not displaying_words and not paused and event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_b or event.key == pygame.K_ESCAPE:
+                    sound = pygame.mixer.Sound(button_press_sound)
+                    sound.play()
+                    showing_rack = False
+                    draw_board(board)
+                    tmp_selected = False
+                elif tmp_selected and event.key == pygame.K_RETURN:
+                    sound = pygame.mixer.Sound(button_press_sound)
+                    sound.play()
+                    selected = tmp_selected
+                    selected_idx = tmp_selected_idx
+                    tmp_selected = False
+                    tmp_selected_idx = -1
+                    showing_rack = False
+                    draw_board(board)
+                    continue
+        if not displaying_words and not showing_rack and not displaying_words:
+            if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                 board = curr_game.get_board()
                 turn = curr_game.get_turn()
                 if selected:
-                    # Ask for Player 1 input
-                    if turn == 0:
-                        x_pos = event.pos[0]
-                        column = int(x_pos // square_size)
-                        placed_piece = curr_game.place_piece(selected_idx, column)
-                        if placed_piece == 1:
-                            error_message = "Column is full! Please place tile in a different column."
-                            display_error_message(error_message)
-
-                    # Ask for Player 2 input
-                    else:
-                        x_pos = event.pos[0]
-                        column = int(x_pos // square_size)
-                        placed_piece = curr_game.place_piece(selected_idx, column)
-                        if placed_piece == 1:
-                            error_message = "Column is full! Please place tile in a different column."
-                            display_error_message(error_message)
+                    pygame.draw.rect(screen, scr_color, (0, 0, width, square_size))
+                    x_pos = event.pos[0]
+                    column = int(x_pos // square_size)
+                    # for row in range(7):
+                    #     for col in range(7):
+                    #         curr_game.place_piece(0, row)
+                    placed_piece = curr_game.place_piece(selected_idx, column)
+                    if placed_piece == 1:
+                        sound = pygame.mixer.Sound(error_sound)
+                        sound.play()
+                        error_message = "Column is full! Please place tile in a different column."
+                        display_error_message(error_message)
                     selected_idx = -1
                     selected = False
                     print_board(board)
                     if game_started:
                         draw_board(board)
+                    sound = pygame.mixer.Sound(tile_drop_sound)
+                    sound.play()
+                    new_scores = curr_game.get_scores()
+                    if new_scores[0] != scores[0] or new_scores[1] != scores[1]:
+                        sound = pygame.mixer.Sound(score_point_sound)
+                        sound.play()
+                        scores = new_scores
                 else:
                     x_pos = event.pos[0]
                     y_pos = event.pos[1]
@@ -626,4 +762,20 @@ while True:
                     else:
                         continue
                     row_idx = 6 - row_idx
+                    sound = pygame.mixer.Sound(button_press_sound)
+                    sound.play()
                     x_button_rect = display_tile_definitions(col_idx, row_idx)
+            if event.type == pygame.MOUSEMOTION and selected_idx != -1:
+                pygame.draw.rect(screen, scr_color, (0, 0, width, square_size))
+                rack = curr_game.get_rack()
+                pos_x = event.pos[0]
+                tile_image = load_tile_image(rack[selected_idx])
+                tile_rect = tile_image.get_rect(center=(pos_x, square_size / 2))  # Adjust position as needed
+                screen.blit(tile_image, tile_rect)
+                pygame.display.update()
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE:
+                    selected = False
+                    selected_idx = -1
+                    pygame.draw.rect(screen, scr_color, (0, 0, width, square_size))
+                    pygame.display.update()
