@@ -78,7 +78,7 @@ class Game:
 
         #create bot
         if self.mode == "vs_bot":
-            self.bot = min_max_bot(4, self.height, self.width, self.min_word_length, self.score_dict, self.dict)
+            self.bot = min_max_bot(self.rack_size, self.height, self.width, self.min_word_length, self.score_dict, self.dict)
 
         # game history (list of turns)
         self.game_history = []
@@ -463,54 +463,45 @@ class min_max_bot:  #min_max bot
         for i in range(self.width):
             if board[-1][i] == '*':
                 available_columns.append(i)
-
-        moves = []
         
         if not available_columns:
             return (score, (-1, -1))
         
+        moves = []
+        best_move = (-1,-1)
+
+        for col in available_columns:
+            for idx, letter in enumerate(rack):
+                new_board, gained_score = self.update_board(board, letter, col)
+                moves.append(((idx, col), new_board, gained_score))
+        moves.sort(reverse = True, key = lambda i : (i[2], random.random()))
+
         if maximizer:
             value = -1 * math.inf
-            for col in available_columns:
-                for idx, letter in enumerate(rack):
-                    new_board, gained_score = self.update_board(
-                        board, letter, col)
-                    curr_val, curr_move = self.simple_alphabeta(new_board, (rack[:idx] + rack[idx+1:]),
-                                                                score + gained_score, depth - 1, a, b, False)
-                    if curr_val > value:
-                        value = curr_val
-                        moves = [(idx, col)]
-                    elif curr_val == value:
-                        moves.append((idx, col))
-                    if value > b:
-                        break
-                else:
-                    a = max(a, value)
-                    continue
-                break
+            for move, new_board, gained_score in moves:
+                curr_val, curr_move = self.simple_alphabeta(new_board, (rack[:idx] + rack[idx+1:]),
+                                                            score + gained_score, depth - 1, a, b, False)
+                if curr_val > value:
+                    value = curr_val
+                    best_move = move
+                if value >= b:
+                    break
+                a = max(a, value)
                     
-            return (value, random.choice(moves))
+            return (value, best_move)
         else:
             value = math.inf
-            for col in available_columns:
-                for idx, letter in enumerate(rack):
-                    new_board, gained_score = self.update_board(
-                        board, letter, col)
-                    curr_val, curr_move = self.simple_alphabeta(new_board, (rack[:idx] + rack[idx+1:]),
-                                                                score - gained_score, depth - 1, a, b, True)
-                    if curr_val < value:
-                        value = curr_val
-                        move = [(idx, col)]
-                    elif curr_val == value:
-                        moves.append((idx, col))
-                    if value < a:
-                        break
-                else:
-                    b = min(b, value)
-                    continue
-                break
-            
-            return (value, random.choice(move))
+            for move, new_board, gained_score in moves:
+                curr_val, curr_move = self.simple_alphabeta(new_board, (rack[:idx] + rack[idx+1:]),
+                                                            score - gained_score, depth - 1, a, b, True)
+                if curr_val < value:
+                    value = curr_val
+                    best_move = move
+                if value <= a:
+                    break
+                b = min(b, value)
+
+            return (value, best_move)
         
 
     def update_board(self, board, letter, col_idx):
