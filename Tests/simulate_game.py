@@ -3,6 +3,7 @@ import os
 import random
 import cProfile
 import pstats
+from tqdm import tqdm
 from pstats import SortKey
 
 
@@ -27,7 +28,7 @@ if (mode == "vs_bot"):
 # player 1 wins, losses, ties
 results = [0.0, 0.0, 0.0]
 
-for i in range(num_games):
+for i in tqdm(range(num_games)):
     if (i % 100 == 0):
         print(i)
     game_instance = Game(min_word_length=4, mode=mode, bot_depth=depth)
