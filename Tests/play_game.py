@@ -6,7 +6,7 @@ sys.path.append(os.path.abspath(os.path.join(
 
 from Back_end import *  # noqa
 
-game_instance = Game(mode = "vs_bot")
+game_instance = Game(mode = "vs_bot", bot_depth=2)
 print(game_instance)
 
 game_state = 0

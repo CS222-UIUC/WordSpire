@@ -22,11 +22,14 @@ mode = input('Enter gamemode (single, local_mult, vs_bot): ')
 depth = 7
 if (mode == "vs_bot"):
     depth = int(input('Enter bot depth: '))
+    bot_turn = int(input('Enter 0 if bot goes first, 1 if second: '))
 
 # player 1 wins, losses, ties
 results = [0.0, 0.0, 0.0]
 
 for i in range(num_games):
+    if (i % 100 == 0):
+        print(i)
     game_instance = Game(min_word_length=4, mode=mode, bot_depth=depth)
 
     if (print_enable):
@@ -35,7 +38,7 @@ for i in range(num_games):
     game_state = 0
 
     while game_state == 0:
-        if (mode == "vs_bot" and game_instance.get_turn() == 0):
+        if (mode == "vs_bot" and game_instance.get_turn() == bot_turn):
             best_move = game_instance.get_best_move()
             game_instance.place_piece(*best_move)
         else:
@@ -63,10 +66,16 @@ for i in range(num_games):
     
     results[game_state - 1] += 1
 
+print(f"\nResults: {results}\n")
 print("Win rates:")
-print(f"   Random: {results[0] / num_games}")
-print(f"   Bot: {results[1] / num_games}")
-print(f"   Ties: {results[2] / num_games}")
+if (mode == 'local_mult'):
+    print(f"   Player 1: {100 * results[0] / num_games}%")
+    print(f"   Player 2: {100 * results[1] / num_games}%")
+elif (mode == 'vs_bot'):
+    print(f"   Bot: {100 * results[bot_turn] / num_games}%")
+    print(f"   Random: {100 * results[1 - bot_turn] / num_games}%")
+print(f"   Ties: {100 * results[2] / num_games}%")
+
 
 # pr.disable()
 # pr.dump_stats('misc/stats_post_change')

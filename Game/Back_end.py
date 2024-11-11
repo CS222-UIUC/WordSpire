@@ -521,7 +521,7 @@ class min_max_bot:  # min_max bot
         for row_idx, row in enumerate(board_copy):
             if row[col_idx] == "*":
                 row[col_idx] = letter
-                return (board_copy, self.get_score(board, row_idx, col_idx))
+                return (board_copy, self.get_score(board_copy, row_idx, col_idx))
 
         raise Exception("Illegal move, column full.")
 
