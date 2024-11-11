@@ -501,7 +501,7 @@ class min_max_bot:  # min_max bot
             for idx, letter in enumerate(rack):
                 new_board, gained_score = self.update_board(board, letter, col)
                 moves.append(
-                    ((idx, col), rack[:idx] + rack[idx+1:], new_board, gained_score))
+                    ((idx, col), new_board, rack[:idx] + rack[idx+1:], gained_score))
         moves.sort(reverse=True, key=lambda i: (i[2], random.random()))
         return moves
 
