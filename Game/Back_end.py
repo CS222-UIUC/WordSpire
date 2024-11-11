@@ -32,7 +32,7 @@ class Game:
     def __init__(self, board_size: tuple[int, int] = (7, 7), rack_size: int = 7,
                  letter_bag: list[str] = default_letter_bag, letter_values: dict[str, int] = default_letter_values,
                  word_dictionary: dict[str, str] = default_word_dictionary, mode: str = "local_mult", min_word_length: int = 4,
-                 num_multipliers=0, len_bonus=default_len_bonus):
+                 num_multipliers=0, len_bonus=default_len_bonus, bot_depth=7):
         """
         Innitialization function
         Note: all arguments have a defualt value but can be overwritten
@@ -43,6 +43,9 @@ class Game:
             letter_bag (list): list of starting letters
             letter_values (dict): a dictionary mapping all letters to their point value
             mode (str): describes how the game should run ["single","local_mult","online_mult","vs_bot"]
+            min_word_length (int): minimum length of words that can be scored
+            num_multipliers (int): number of bonus points added to random tile locations
+            len_bonus (dict): a dictionary of bonus points for length of words
 
         Return:
             Void
@@ -78,7 +81,7 @@ class Game:
 
         # create bot
         if self.mode == "vs_bot":
-            self.bot = min_max_bot(self.rack_size, self.height, self.width,
+            self.bot = min_max_bot(min(bot_depth, self.rack_size), self.height, self.width,
                                    self.min_word_length, self.score_dict, self.dict)
 
         # game history (list of turns)
