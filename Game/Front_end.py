@@ -533,6 +533,7 @@ screen.fill(DARKER_GRAY)
 start_button_rect = display_start_menu()
 
 game_started = False
+game_initiated = False
 paused = False
 showing_rack = False
 selected = False
@@ -560,16 +561,16 @@ while True:
         # Update board and turn number
         if event.type == pygame.QUIT: #user can exit if needed
             sys.exit()
-        if not game_started: # Display starting menu
+        if not game_initiated: # Display starting menu
             if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                 mouse_pos = event.pos
                 if start_button_rect.collidepoint(mouse_pos):
                     sound = pygame.mixer.Sound(button_press_sound)
                     sound.play()
-                    game_started = True
+                    game_initiated = True
                     continue
                 continue
-        if game_started and (mode == "" or num_players == 0) and error_message == "": # Display mode selection menu
+        if game_initiated and (mode == "" or num_players == 0) and error_message == "": # Display mode selection menu
             dark_button_rect, light_button_rect, one_player_button_rect, two_players_button_rect, ok_button_rect = display_mode_selection()
             if event.type == pygame.MOUSEBUTTONDOWN:
                 mouse_pos = event.pos
@@ -594,12 +595,15 @@ while True:
                     mode = "light"
                     display_mode_selection()
                 elif ok_button_rect.collidepoint(mouse_pos): # "Okay" button pressed
+                    game_started = True
                     sound = pygame.mixer.Sound(button_press_sound)
                     sound.play()
                     mode = "set"
                     num_players = 2
                     draw_board(board)
                 elif one_player_button_rect.collidepoint(mouse_pos): # "1 Player" button pressed
+                    sound = pygame.mixer.Sound(error_sound)
+                    sound.play()
                     num_players = 1
                     error_message = "Singleplayer not implemented yet"
                     display_error_message(error_message) # Display an error message
@@ -677,6 +681,8 @@ while True:
             if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                 mouse_pos = event.pos
                 if x_button_rect.collidepoint(mouse_pos):
+                    if game_started:
+                        draw_board(board)
                     sound = pygame.mixer.Sound(button_press_sound)
                     sound.play()
                     error_message = ""
@@ -780,8 +786,7 @@ while True:
                     showing_rack = False
                     draw_board(board)
                     continue
-        if not displaying_words and not showing_rack and not displaying_words and game_started:
-            draw_board(board)
+        if not displaying_words and not showing_rack and game_started:
             if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                 board = curr_game.get_board()
                 turn = curr_game.get_turn()
