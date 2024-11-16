@@ -5,6 +5,7 @@ import sys
 import os
 import math
 import copy
+from quick_eval import min_max_bot
 from collections import defaultdict
 
 # default letters and their value
