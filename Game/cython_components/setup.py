@@ -8,6 +8,7 @@ output_dir = os.path.join(os.getcwd(), 'Game/cython_components')  # Change this 
 setup(
     ext_modules=cythonize("Game/cython_components/quick_eval.pyx"),
     include_dirs=[get_python_inc()],
+    script_args=["build_ext", "--inplace"],
 )
 
-# compile with "python setup.py build_ext --inplace"
+# compile with "python Game/cython_components/setup.py build_ext --inplace"

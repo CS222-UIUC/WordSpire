@@ -5,7 +5,7 @@ import sys
 import os
 import math
 import copy
-from quick_eval import min_max_bot
+import quick_eval 
 from collections import defaultdict
 
 # default letters and their value
@@ -82,8 +82,8 @@ class Game:
 
         # create bot
         if self.mode == "vs_bot":
-            self.bot = min_max_bot(min(bot_depth, self.rack_size), self.height, self.width,
-                                   self.min_word_length, self.score_dict, self.dict)
+            self.bot = quick_eval.min_max_bot(min(bot_depth, self.rack_size), self.height, self.width,
+                                              self.min_word_length, self.score_dict, self.dict)
 
         # game history (list of turns)
         self.game_history = []

@@ -6,6 +6,7 @@ import math
 import copy
 import sys
 from typing import List, Dict, Tuple
+from libc.limits cimport INT_MAX
 
 cdef class min_max_bot:
     cdef int max_depth
@@ -25,7 +26,7 @@ cdef class min_max_bot:
 
     def get_best_move(self, List[List[str]] board, List[str] rack, List[str] bag):
         cdef int depth = min(self.max_depth, len(rack))
-        val, move = self.simple_alphabeta(board, rack, 0, depth, -1 * math.inf, math.inf, True)
+        val, move = self.simple_alphabeta(board, rack, 0, depth, -INT_MAX, INT_MAX, True)
         return move
 
     cdef simple_alphabeta(self, List[List[str]] board, List[str] rack, int score, int depth, int a, int b, bint maximizer):
@@ -37,12 +38,15 @@ cdef class min_max_bot:
         if not available_columns:
             return (score, (-1, -1))
 
-        cdef List[Tuple[Tuple[int, int], List[List[str]], List[str], int]] moves = self.order_moves(board, rack, available_columns)
+        cdef List[Tuple[Tuple[int, int], 
+                        List[List[str]], 
+                        List[str], 
+                        int]] moves = self.order_moves(board, rack, available_columns)
         best_move = (-1, -1)
 
         cdef int value
         if maximizer:
-            value = -sys.maxsize
+            value = -INT_MAX
             for move, new_board, new_rack, gained_score in moves:
                 curr_val, curr_move = self.simple_alphabeta(new_board, new_rack, score + gained_score, depth - 1, a, b, False)
                 if curr_val > value:
@@ -54,7 +58,7 @@ cdef class min_max_bot:
 
             return (value, best_move)
         else:
-            value = sys.maxsize
+            value = INT_MAX
             for move, new_board, new_rack, gained_score in moves:
                 curr_val, curr_move = self.simple_alphabeta(new_board, new_rack, score - gained_score, depth - 1, a, b, True)
                 if curr_val < value:
@@ -73,7 +77,7 @@ cdef class min_max_bot:
             for idx, letter in enumerate(rack):
                 new_board, gained_score = self.update_board(board, letter, col)
                 moves.append(((idx, col), new_board, rack[:idx] + rack[idx+1:], gained_score))
-        moves.sort(reverse=True, key=lambda i: (i[2], random.random()))
+        moves.sort(reverse=True, key=lambda i: (i[3], random.random()))
         return moves
 
     cdef get_available_columns(self, List[List[str]] board):
@@ -147,6 +151,8 @@ cdef class min_max_bot:
 
         cdef int score = 0
 
+        cdef int i
+
         # horizontal words
         cdef int start_offset = col_idx
         for i in range(1, start_offset + 1):
@@ -176,8 +182,9 @@ cdef class min_max_bot:
                 end_offset = i - 1
                 break
 
-        cdef List[str] col = [board[row_idx + row][col_idx]
-               for row in range(-start_offset, end_offset)]
+        cdef List[str] col = []
+        for i in range(-start_offset, end_offset):
+            col.append(board[row_idx + i][col_idx])
         score += self.score_list(col, start_offset, self.min_word_length)
 
         # up-right words
@@ -193,8 +200,9 @@ cdef class min_max_bot:
                 end_offset = i - 1
                 break
 
-        cdef List[str] main_diagonal = [board[row_idx + i][col_idx + i]
-                         for i in range(-start_offset, end_offset)]
+        cdef List[str] main_diagonal = []
+        for i in range(-start_offset, end_offset):
+            main_diagonal.append(board[row_idx + i][col_idx + i])
         score += self.score_list(main_diagonal, start_offset, self.min_word_length)
 
         # up-left words
@@ -210,6 +218,9 @@ cdef class min_max_bot:
                 end_offset = i - 1
                 break
 
-        cdef List[str] anti_diagonal = [board[row_idx + i][col_idx - i]
-                         for i in range(-start_offset, end_offset)]
-        score += self.score_list(anti_diagonal, start_offset, self.min_word)
+        cdef List[str] anti_diagonal = []
+        for i in range(-start_offset, end_offset):
+            anti_diagonal.append(board[row_idx + i][col_idx - i])
+        score += self.score_list(anti_diagonal, start_offset, self.min_word_length)
+
+        return score
