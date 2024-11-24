@@ -11,12 +11,15 @@ BLACK = (0, 0, 0)
 RED = (255, 0, 0)
 WHITE = (255, 255, 255)
 GREEN = (0, 255, 0)
-DARK_BROWN = (92, 64, 51)
 DARK_GRAY = (83, 83, 83)
+DARKER_GRAY = (40, 40, 40)
 LIGHT_GRAY = (105, 105, 105)
 PURPLE = (91, 17, 102)
 YELLOW = (254, 221, 86)
 OFF_WHITE = (237, 237, 237)
+BEIGE = (234, 220, 201)
+MAROON = (101, 0, 6)
+MAHOGANY = (46, 25, 20)
 
 # Load tile images
 alphabet = list()
@@ -25,7 +28,7 @@ for letter in string.ascii_lowercase:
     uc_letter = letter.upper()
     alphabet.append(uc_letter)
     file_name = os.path.join(os.path.dirname(__file__), 'misc', 'scrabble_tiles', letter + '.png')
-    
+
     # Check if the file exists
     if not os.path.exists(file_name):
         print(f"Error: File does not exist at path '{file_name}'")
@@ -47,7 +50,7 @@ board = np.array(board_list)
 rack_list = curr_game.get_rack()
 rack = np.array(rack_list)
 game_over = curr_game.get_game_state()
-column_size = 7 #this may be changed
+column_size = 7
 row_size = 7
 square_size = 100
 width = column_size * square_size #number of columns 
@@ -55,16 +58,20 @@ height = (row_size + 1) * square_size #height +1 row for game piece?
 size = (width, height) #size of the screen with extra space on top 
 turn = curr_game.get_turn()
 
-scr_color = BLACK
+scr_color = DARKER_GRAY
 txt_color = WHITE
 bttn_color = GREEN
 bttn_txt_color = BLACK
-board_color = DARK_BROWN
+board_color = MAHOGANY
 
 # Initialize Pygame and display screen
 pygame.init()
 pygame.mixer.init()
-screen = pygame.display.set_mode(size) #gives the screen size of the game board
+screen = pygame.display.set_mode(size) # Gives the screen size of the game board
+pygame.display.set_caption('WordSpire') # Set name of the window
+image_path = letter_dict.get('W')
+icon = pygame.image.load(image_path)
+pygame.display.set_icon(icon)
 
 def print_board(board):
     """
@@ -85,12 +92,13 @@ def draw_board(board):
     Function to draw the board
 
     """
+    screen.fill(scr_color)
     for column in range(column_size):
         for row in range(row_size):
             # Draw board
-            pygame.draw.rect(screen, board_color, (column * square_size, row * square_size + square_size, square_size, square_size))
+            pygame.draw.rect(screen, MAHOGANY, (column * square_size, row * square_size + square_size, square_size, square_size))
             # Draw blank slots
-            pygame.draw.rect(screen, scr_color, (column * square_size + 10, (row + 1) * square_size + 10, square_size - 20, square_size - 20))
+            pygame.draw.rect(screen, MAROON, (column * square_size + 10, (row + 1) * square_size + 10, square_size - 20, square_size - 20))
     for column in range(column_size):
         for row in range(row_size):
             if board[row][column] != "*":
@@ -131,7 +139,7 @@ def display_rack(curr_rack, selected_idx):
         rack_menu_buttons (list): Array of pygame.rect.Rect objects for text buttons and
                                   tuples containing (image button, rack index)
     """
-    # Returns a list of buttons starting with 'View Board', then 'Select Tile', then the letter tiles
+    screen.fill(scr_color)
     curr_rack = curr_game.get_rack()
     # Display player turn
     font = pygame.font.Font('freesansbold.ttf', 48)
@@ -180,10 +188,20 @@ def display_rack(curr_rack, selected_idx):
     selected_rect.center = (width / 2, height / 2 + 80)
     screen.blit(selected_text, selected_rect)
 
+    rack_background_rect = pygame.Rect(0, height / 2 - 70, width, 120)
+    pygame.draw.rect(screen, MAHOGANY, rack_background_rect)
+    shadow_rect = pygame.Rect(0, height / 2 + 30, width, 6)
+    pygame.draw.rect(screen, BLACK, shadow_rect)
+    shadow_2_rect = pygame.Rect(0, height / 2 + 47, width, 3)
+    pygame.draw.rect(screen, BLACK, shadow_2_rect)
+
     # Load and display images for tiles
     for i, letter in enumerate(curr_rack):
+        y_pos = height / 2 - 60
+        if i == selected_idx:
+            y_pos -= 40
         tile_image = load_tile_image(letter)
-        tile_rect = tile_image.get_rect(topleft=(i * 100 + 10, height / 2 - 40))  # Adjust position as needed
+        tile_rect = tile_image.get_rect(topleft=(i * 100 + 10, y_pos))  # Adjust position as needed
         screen.blit(tile_image, tile_rect)
         rack_menu_buttons.append((tile_rect, i))  # Store the rect with the index
 
@@ -220,6 +238,8 @@ def display_pause_menu():
         options_button_rect (pygame.rect.Rect): pygame object representing the "Options" text button box
     """
     # Display Pause Menu
+    screen.fill(scr_color)
+
     font = pygame.font.Font('freesansbold.ttf', 32)
     text = font.render("Game Paused", True, txt_color)
     textRect = text.get_rect()
@@ -426,6 +446,8 @@ def display_game_over(game_state):
     if game_state == 0:
         return 0
     
+    screen.fill(scr_color)
+
     font = pygame.font.Font('freesansbold.ttf', 48)
     text = font.render("Game Over", True, txt_color)
     textRect = text.get_rect()
@@ -461,31 +483,57 @@ def display_game_over(game_state):
 
     return restart_button_rect, quit_button_rect
 
-def display_mode_selection(screen_mode = "", num_players = -1):
-    # want light mode button, dark mode button, singleplayer, multiplayer, and a start button (5 buttons)
+def display_mode_selection():
+    """
+    Function to display the mode selection screen, including light/dark theme selection and number of players
+
+    Return:
+        dark_button_rect (pygame.rect.Rect): pygame object representing the "Dark Mode" text button box
+        light_button_rect (pygame.rect.Rect): pygame object representing the "Light Mode" text button box
+        one_player_button_rect (pygame.rect.Rect): pygame object representing the "1 Player" text button box
+        two_players_button_rect (pygame.rect.Rect): pygame object representing the "2 Players" text button box
+        ok_button_rect (pygame.rect.Rect): pygame object representing the "Okay" text button box to confirm selections
+    """    
     screen.fill(scr_color)
+
+    # Create Select Mode text
+    font = pygame.font.Font('freesansbold.ttf', 36)
+    mode_text = font.render("Select Mode:", True, txt_color)
+    mode_textRect = mode_text.get_rect()
+    mode_textRect.center = (width / 2, height / 5 - 60)
+    screen.blit(mode_text, mode_textRect)
+    # Create mode selection buttons (light and dark) 
     dark_button_center = (width / 3 - 90, height / 5)
     light_button_center = (width * 2 / 3 - 90, height / 5)
     dark_button_rect = create_text_button(dark_button_center, message = "Dark Mode", text_color = WHITE, button_color = PURPLE, size = (180, 50))
     light_button_rect = create_text_button(light_button_center, message = "Light Mode", text_color = WHITE, button_color = YELLOW, size = (180, 50))
-
+    # Create Number of Players text
+    font = pygame.font.Font('freesansbold.ttf', 36)
+    players_text = font.render("Number of Players:", True, txt_color)
+    players_textRect = players_text.get_rect()
+    players_textRect.center = (width / 2, height / 2 - 60)
+    screen.blit(players_text, players_textRect)
+    # Create player number buttons
     one_player_center = (width / 3 - 90, height / 2)
     two_players_center = (width * 2 / 3 - 90, height / 2)
     one_player_button_rect = create_text_button(one_player_center, message = "1 Player", text_color = bttn_txt_color, button_color = bttn_color, size = (180, 50))
     two_players_button_rect = create_text_button(two_players_center, message = "2 Players", text_color = bttn_txt_color, button_color = bttn_color, size = (180, 50))
-
+    # Create button to confirm selections
     ok_button_center = (width / 2 - 60, height * 3 / 4)
     ok_button_rect = create_text_button(ok_button_center, message = "Okay", text_color = bttn_txt_color, button_color = bttn_color)
     pygame.display.update()
-    return dark_button_rect, light_button_rect, one_player_button_rect, two_players_button_rect, ok_button_rect
+
+    return dark_button_rect, light_button_rect, one_player_button_rect, two_players_button_rect, ok_button_rect # return all buttons
 
 
 # Draw the board
 pygame.display.update()
 print_board(board)
+screen.fill(DARKER_GRAY)
 start_button_rect = display_start_menu()
 
 game_started = False
+game_initiated = False
 paused = False
 showing_rack = False
 selected = False
@@ -509,47 +557,60 @@ while True:
     game_over = curr_game.get_game_state()
     board = curr_game.get_board()
     turn = curr_game.get_turn()
-    for event in pygame.event.get(): #any motion
+    for event in pygame.event.get(): # any motion/action in pygame
         # Update board and turn number
         if event.type == pygame.QUIT: #user can exit if needed
             sys.exit()
-        if not game_started:  # Display starting menu
+        if not game_initiated: # Display starting menu
             if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                 mouse_pos = event.pos
                 if start_button_rect.collidepoint(mouse_pos):
                     sound = pygame.mixer.Sound(button_press_sound)
                     sound.play()
-                    game_started = True
-                    screen.fill(scr_color)
+                    game_initiated = True
                     continue
                 continue
-        if game_started and (mode == "" or num_players == 0):
+        if game_initiated and (mode == "" or num_players == 0) and error_message == "": # Display mode selection menu
             dark_button_rect, light_button_rect, one_player_button_rect, two_players_button_rect, ok_button_rect = display_mode_selection()
             if event.type == pygame.MOUSEBUTTONDOWN:
                 mouse_pos = event.pos
-                if dark_button_rect.collidepoint(mouse_pos):
-                    scr_color = BLACK
+                if dark_button_rect.collidepoint(mouse_pos): # "Dark Mode" button pressed
+                    sound = pygame.mixer.Sound(button_press_sound)
+                    sound.play()
+                    scr_color = DARKER_GRAY
                     txt_color = WHITE
                     bttn_color = GREEN
                     bttn_txt_color = BLACK
-                    board_color = DARK_BROWN
+                    board_color = MAHOGANY
                     mode = "dark"
-                    display_mode_selection(screen_mode = mode)
-                elif light_button_rect.collidepoint(mouse_pos):
-                    scr_color = OFF_WHITE
+                    display_mode_selection()
+                elif light_button_rect.collidepoint(mouse_pos): # "Light Mode" button pressed
+                    sound = pygame.mixer.Sound(button_press_sound)
+                    sound.play()
+                    scr_color = BEIGE
                     txt_color = BLACK
                     bttn_color = BLUE
                     bttn_txt_color = WHITE
-                    board_color = BLACK
+                    board_color = MAHOGANY
                     mode = "light"
-                    display_mode_selection(screen_mode = mode)
-                if mode != "":
-                   if ok_button_rect.collidepoint(mouse_pos):
-                       num_players = 2
-                       draw_board(board)
+                    display_mode_selection()
+                elif ok_button_rect.collidepoint(mouse_pos): # "Okay" button pressed
+                    game_started = True
+                    sound = pygame.mixer.Sound(button_press_sound)
+                    sound.play()
+                    mode = "set"
+                    num_players = 2
+                    draw_board(board)
+                elif one_player_button_rect.collidepoint(mouse_pos): # "1 Player" button pressed
+                    sound = pygame.mixer.Sound(error_sound)
+                    sound.play()
+                    num_players = 1
+                    error_message = "Singleplayer not implemented yet"
+                    display_error_message(error_message) # Display an error message
+                    continue
                 continue
+            continue
         if game_over > 0:
-            screen.fill(scr_color)
             if not end_screen_displayed:
                 restart_button_rect, quit_button_rect = display_game_over(game_over)
                 end_screen_displayed = True
@@ -558,7 +619,7 @@ while True:
                 if restart_button_rect.collidepoint(mouse_pos):
                     sound = pygame.mixer.Sound(button_press_sound)
                     curr_game = Back_end.Game()
-                    board_list = curr_game.get_board() # gets the current board state, which is a 2D array of strings
+                    board_list = curr_game.get_board()
                     board = np.array(board_list)
                     rack_list = curr_game.get_rack()
                     rack = np.array(rack_list)
@@ -615,17 +676,17 @@ while True:
                 continue
         if error_message != "":
             if not error_message_drawn:
-                draw_board(board)
                 x_button_rect = display_error_message(error_message)
             error_message_drawn = True
             if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                 mouse_pos = event.pos
                 if x_button_rect.collidepoint(mouse_pos):
+                    if game_started:
+                        draw_board(board)
                     sound = pygame.mixer.Sound(button_press_sound)
                     sound.play()
                     error_message = ""
                     error_message_drawn = False
-                    draw_board(board)
                     continue
             else:
                 continue
@@ -633,13 +694,11 @@ while True:
             if event.key == pygame.K_p:
                 sound = pygame.mixer.Sound(button_press_sound)
                 sound.play()
-                screen.fill(scr_color)
                 paused = True
                 resume_button_rect, options_button_rect = display_pause_menu()
             elif event.key == pygame.K_r:
                 sound = pygame.mixer.Sound(button_press_sound)
                 sound.play()
-                screen.fill(scr_color)
                 showing_rack = True
                 rack = curr_game.get_rack()
                 rack_menu_buttons = display_rack(rack, selected_idx)
@@ -673,9 +732,14 @@ while True:
                     for i in range(2, len(rack_menu_buttons)):  # Start from index 2 to skip 'View Board' and 'Select Tile'
                         tile_button_rect, rack_idx = rack_menu_buttons[i]
                         if tile_button_rect.collidepoint(mouse_pos):
-                            tmp_selected = True
-                            tmp_selected_idx = rack_idx
-                            screen.fill(scr_color)
+                            if tmp_selected and rack_idx == tmp_selected_idx:
+                                tmp_selected = False
+                                tmp_selected_idx = -1
+                            else:
+                                tmp_selected = True
+                                tmp_selected_idx = rack_idx
+                            sound = pygame.mixer.Sound(tile_drop_sound)
+                            sound.play()
                             rack_menu_buttons = display_rack(rack, tmp_selected_idx)
                             continue
                     if view_board_button_rect.collidepoint(mouse_pos):
@@ -722,7 +786,7 @@ while True:
                     showing_rack = False
                     draw_board(board)
                     continue
-        if not displaying_words and not showing_rack and not displaying_words:
+        if not displaying_words and not showing_rack and game_started:
             if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                 board = curr_game.get_board()
                 turn = curr_game.get_turn()
