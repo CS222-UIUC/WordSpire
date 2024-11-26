@@ -6,9 +6,11 @@ import os
 import Back_end
 
 # Color definitions
-BLUE = (0, 0, 255)
+BLUE = (65, 105, 225)
+ROYAL_BLUE = (0, 0, 225)
 BLACK = (0, 0, 0)
 RED = (255, 0, 0)
+DUSTY_RED = (185, 72, 78)
 WHITE = (255, 255, 255)
 GREEN = (0, 255, 0)
 DARK_GRAY = (83, 83, 83)
@@ -106,6 +108,69 @@ def draw_board(board):
                 screen.blit(tile_image, (column * square_size + 10, height - (row + 1) * square_size + 10))
     pygame.display.update()
 
+def display_pop_up(dimensions, text_list, buttons_list):
+    menu_width = dimensions[0]
+    menu_height = dimensions[1]
+    menu_x = (width - menu_width) / 2
+    menu_y = (height - menu_height) / 2
+    popup_menu_rect = pygame.Rect(menu_x, menu_y, menu_width, menu_height)
+    pygame.draw.rect(screen, DARK_GRAY, popup_menu_rect, width=0, border_radius=10)
+
+    for text_tuple in text_list:
+        message = text_tuple[0]
+        color = text_tuple[1]
+        center_coords = text_tuple[2]
+        y_offset = text_tuple[3]
+        spacing = text_tuple[4]
+
+        font = pygame.font.Font('freesansbold.ttf', 24)  # Adjust font size if needed
+        words = message.split()
+        lines = []
+        current_line = ""
+
+        if y_offset == 0:
+            font = pygame.font.Font('freesansbold.ttf', 24)  # Adjust font size if needed
+            word_text = font.render(message, True, color)
+            word_text_rect = word_text.get_rect(center=center_coords)
+            screen.blit(word_text, word_text_rect)
+        
+        else:
+            lines_words = message.split()
+            lines = []
+            current_line = ""
+            # Improved word wrapping that avoids splitting words in the middle
+            for word in lines_words:
+                # Check if adding the word to the current line would exceed the width
+                if font.size(current_line + word + spacing)[0] <= (menu_width - 40):  # 40px padding
+                    current_line += word + spacing  # Add the word with a space
+                else:
+                    # Append the current line to lines and start a new line with the word
+                    lines.append(current_line.strip())
+                    current_line = word + spacing
+            # Append any remaining text in the last line
+            if current_line:
+                lines.append(current_line.strip())
+            # Render each line of text with left alignment
+            start_y = menu_y + y_offset  # Adjusted starting Y position
+            for i, line in enumerate(lines):
+                message_text = font.render(line, True, color)
+                message_text_rect = message_text.get_rect(center=(menu_x + menu_width / 2, start_y + i * 30))  # 20px padding from the left
+                screen.blit(message_text, message_text_rect)
+
+    buttons = []
+
+    for button_tuple in buttons_list:
+        center = button_tuple[0]
+        text = button_tuple[1]
+        font_size = button_tuple[2]
+        text_color = button_tuple[3]
+        button_color = button_tuple[4]
+        size = button_tuple[5]
+        button = create_text_button(center, text, font_size=font_size, text_color=text_color, button_color=button_color, size=size)
+        buttons.append(button)
+
+    return buttons
+
 def display_start_menu():
     """
     Function to display the start menu
@@ -156,6 +221,16 @@ def display_rack(curr_rack, selected_idx):
     p1_score, p2_score = curr_game.get_scores()
     p1_msg = "Player 1 Score: " + str(p1_score)
     p2_msg = "Player 2 Score: " + str(p2_score)
+    if p1_points_gained > 0:
+        p1_pts_gained_txt = font.render(f"+{p1_points_gained}", True, BLUE)
+        p1_pts_rect = p1_pts_gained_txt.get_rect()
+        p1_pts_rect.center = (width / 4 + 33, height - 60)
+        screen.blit(p1_pts_gained_txt, p1_pts_rect)
+    if p2_points_gained > 0:
+        p2_pts_gained_txt = font.render(f"+{p2_points_gained}", True, DUSTY_RED)
+        p2_pts_rect = p2_pts_gained_txt.get_rect()
+        p2_pts_rect.center = (3 * width / 4 + 133, height - 60)
+        screen.blit(p2_pts_gained_txt, p2_pts_rect)
     p1_text = font.render(p1_msg, True, txt_color)
     p2_text = font.render(p2_msg, True, txt_color)
     p1_rect = p1_text.get_rect()
@@ -299,43 +374,22 @@ def display_error_message(message):
     menu_height = height * 0.4  # Adjusted height
     menu_x = (width - menu_width) / 2
     menu_y = (height - menu_height) / 2
-    error_menu_rect = pygame.Rect(menu_x, menu_y, menu_width, menu_height)
-
-    # Draw the error menu with rounded corners
-    pygame.draw.rect(screen, DARK_GRAY, error_menu_rect, width=0, border_radius=10)
-
-    # Display the error message with word wrapping
-    font = pygame.font.Font('freesansbold.ttf', 24)  # Adjust font size if needed
-    words = message.split()
-    lines = []
-    current_line = ""
-
-    # Word wrapping logic
-    for word in words:
-        # Check if adding the next word exceeds the menu width
-        if font.size(current_line + word)[0] < (menu_width - 40):  # 40px padding
-            current_line += word + " "
-        else:
-            lines.append(current_line.strip())
-            current_line = word + " "
-    if current_line:
-        lines.append(current_line.strip())
-
-    # Render each line of text, starting lower in the pop-up
-    start_y = menu_y + 120  # Adjusted starting Y position (increased to be lower)
-    for i, line in enumerate(lines):
-        error_text = font.render(line, True, WHITE)
-        error_text_rect = error_text.get_rect(center=(menu_x + menu_width / 2, start_y + i * 30))  # 30px line spacing
-        screen.blit(error_text, error_text_rect)
+    dimensions = (menu_width, menu_height)
+    y_offset = 120
+    text_tuple = (message, WHITE, (0, 0), y_offset, ' ')
+    text_list = [text_tuple]
 
     # Create a close button ("X") in the top right of the pop-up
     close_button_center = (menu_x + menu_width / 2 + 150, menu_y + 10)
-    x_button_rect = create_text_button(close_button_center, "X", font_size=24, text_color=WHITE, button_color=RED, size=(50, 50))
+    close_button_tuple = (close_button_center, "X", 24, WHITE, RED, (50, 50))
+    buttons_list = [close_button_tuple]
+
+    buttons = display_pop_up(dimensions, text_list, buttons_list)
 
     # Update the display to show the pop-up and the close button
     pygame.display.update()
 
-    return x_button_rect
+    return buttons[0]
 
 def display_tile_definitions(col_idx, row_idx, word_idx = 0):
     """
@@ -349,7 +403,6 @@ def display_tile_definitions(col_idx, row_idx, word_idx = 0):
                         and a left_button_rect and right_button_rect, as well as the word_idx
     """
 
-    buttons = []
     tile_info = curr_game.get_words(col_idx, row_idx)
     num_words = len(tile_info)
 
@@ -357,61 +410,34 @@ def display_tile_definitions(col_idx, row_idx, word_idx = 0):
     menu_height = height * 0.6  # Adjusted height
     menu_x = (width - menu_width) / 2
     menu_y = (height - menu_height) / 2
-    words_menu_rect = pygame.Rect(menu_x, menu_y, menu_width, menu_height)
-
-    pygame.draw.rect(screen, DARK_GRAY, words_menu_rect, width=0, border_radius=10)
+    dimensions = (menu_width, menu_height)
 
     close_button_center = (menu_x + menu_width / 2 + 150, menu_y + 10)
-    x_button_rect = create_text_button(close_button_center, "X", font_size=24, text_color=WHITE, button_color=RED, size=(50, 50))
-    buttons.append(x_button_rect)
+    close_button_tuple = (close_button_center, "X", 24, WHITE, RED, (50, 50))
+    buttons_list = [close_button_tuple]
 
     # Create pop-up of words with definitions over the current screen
     words = []
     scores = []
     definitions = []
+    text_list = []
     for entry in tile_info:
         words.append(entry[0])
         scores.append(entry[1])
         definitions.append(entry[2])
     if num_words == 0:
         box_message = "No words made at this tile"
-        font = pygame.font.Font('freesansbold.ttf', 24)
-        words_text = font.render(box_message, True, LIGHT_GRAY)
-        words_text_rect = words_text.get_rect(center=words_menu_rect.center)
-        screen.blit(words_text, words_text_rect)
+        box_text_tuple = (box_message, LIGHT_GRAY, (width / 2, height / 2), 0, ' ')
+        text_list.append(box_text_tuple)
     else:
-        # Display the error message with word wrapping
-        word_text = words[word_idx]
-        word_text = word_text + " (" + str(scores[word_idx]) + " points)"
+        word_text = f"{words[word_idx]} ({str(scores[word_idx])} points)"
+        word_text_tuple = (word_text, WHITE, (menu_x + 200, menu_y + 100), 0, ' ')
+        text_list.append(word_text_tuple)
+
         definition_text = definitions[word_idx]
-        font = pygame.font.Font('freesansbold.ttf', 24)  # Adjust font size if needed
-        lines_words = definition_text.split()
-        lines = []
-        current_line = ""
-        font = pygame.font.Font('freesansbold.ttf', 24)
-        word_text = font.render(word_text, True, WHITE)
-        word_text_rect = word_text.get_rect(center=(menu_x + 200, menu_y + 100))
-        screen.blit(word_text, word_text_rect)
-        lines = []
-        current_line = ""
-        # Improved word wrapping that avoids splitting words in the middle
-        for word in lines_words:
-            # Check if adding the word to the current line would exceed the width
-            if font.size(current_line + word + " ")[0] <= (menu_width - 40):  # 40px padding
-                current_line += word + " "  # Add the word with a space
-            else:
-                # Append the current line to lines and start a new line with the word
-                lines.append(current_line.strip())
-                current_line = word + " "
-        # Append any remaining text in the last line
-        if current_line:
-            lines.append(current_line.strip())
-        # Render each line of text with left alignment
-        start_y = menu_y + 140  # Adjusted starting Y position
-        for i, line in enumerate(lines):
-            def_text = font.render(line, True, WHITE)
-            def_text_rect = def_text.get_rect(center=(menu_x + menu_width / 2, start_y + i * 30))  # 20px padding from the left
-            screen.blit(def_text, def_text_rect)
+        definition_text_tuple = (definition_text, WHITE, (0, 0), 140, ' ')
+        text_list.append(definition_text_tuple)
+        
         if num_words > 1:
             left_button_color = LIGHT_GRAY
             left_text_color = DARK_GRAY
@@ -425,11 +451,13 @@ def display_tile_definitions(col_idx, row_idx, word_idx = 0):
                 right_text_color = BLACK
             left_button_center = (menu_x + 10, menu_y + menu_height - 60)
             right_button_center = (menu_x + menu_width / 2 + 150, menu_y + menu_height - 60)
-            left_button_rect = create_text_button(left_button_center, "<", text_color=left_text_color, button_color=left_button_color, size=(50, 50))
-            right_button_rect = create_text_button(right_button_center, ">", text_color=right_text_color, button_color=right_button_color, size=(50, 50))
-            buttons.append(left_button_rect)
-            buttons.append(right_button_rect)
-            buttons.append(num_words)
+            left_button_tuple = (left_button_center, "<", 24, left_text_color, left_button_color, (50, 50))
+            buttons_list.append(left_button_tuple)
+            right_button_tuple = (right_button_center, ">", 24, right_text_color, right_button_color, (50, 50))
+            buttons_list.append(right_button_tuple)
+    buttons = display_pop_up(dimensions, text_list, buttons_list)
+    if num_words > 1:
+        buttons.append(num_words)
     pygame.display.update()
     return buttons
 
@@ -461,7 +489,7 @@ def display_game_over(game_state):
         sound = pygame.mixer.Sound(winner_sound)
         sound.play()
     elif game_state == 2:
-        color = RED
+        color = DUSTY_RED
         sound = pygame.mixer.Sound(winner_sound)
         sound.play()
     else:
@@ -525,6 +553,69 @@ def display_mode_selection():
 
     return dark_button_rect, light_button_rect, one_player_button_rect, two_players_button_rect, ok_button_rect # return all buttons
 
+def display_found_words(page):
+    menu_width = width * 0.6  # Adjusted width for longer messages
+    menu_height = height * 0.6  # Adjusted height
+    menu_x = (width - menu_width) / 2
+    menu_y = (height - menu_height) / 2
+    dimensions = (menu_width, menu_height)
+
+    close_button_center = (menu_x + menu_width / 2 + 150, menu_y + 10)
+    close_button_tuple = (close_button_center, "X", 24, WHITE, RED, (50, 50))
+    buttons_list = [close_button_tuple]
+    
+    text_list = []
+    if page == 0:
+        title_tuple = ("Player 1 Words", BLUE, (width / 2, menu_y + 100), 0, ' ')
+        text_list.append(title_tuple)
+        p1_words = words_made.get(1)
+        p1_words_str = ""
+        for i in range(len(p1_words)):
+            p1_words_str += p1_words[i]
+            if i < len(p1_words) - 1:
+                p1_words_str += " "
+        if p1_words_str != "":
+            p1_words_tuple = (p1_words_str, WHITE, (0, 0), 140, '   ')
+            text_list.append(p1_words_tuple)
+        else:
+            message_tuple = ("No words found", LIGHT_GRAY, (width / 2, height / 2), 0, ' ')
+            text_list.append(message_tuple)
+        left_text_color = DARK_GRAY
+        left_button_color = LIGHT_GRAY
+        right_text_color = BLACK
+        right_button_color = GREEN
+
+    if page == 1:
+        title_tuple = ("Player 2 Words", DUSTY_RED, (width / 2, menu_y + 100), 0, ' ')
+        text_list.append(title_tuple)
+        p2_words = words_made.get(2)
+        p2_words_str = ""
+        for i in range(len(p2_words)):
+            p2_words_str += p2_words[i]
+            if i < len(p2_words) - 1:
+                p2_words_str += " "
+        if p2_words_str != "":
+            p2_words_tuple = (p2_words_str, WHITE, (0, 0), 140, '   ')
+            text_list.append(p2_words_tuple)
+        else:
+            message_tuple = ("No words found", LIGHT_GRAY, (width / 2, height / 2), 0, ' ')
+            text_list.append(message_tuple)
+        left_text_color = BLACK
+        left_button_color = GREEN
+        right_text_color = DARK_GRAY
+        right_button_color = LIGHT_GRAY
+
+    left_button_center = (menu_x + 10, menu_y + menu_height - 60)
+    right_button_center = (menu_x + menu_width / 2 + 150, menu_y + menu_height - 60)
+    left_button_tuple = (left_button_center, "<", 24, left_text_color, left_button_color, (50, 50))
+    buttons_list.append(left_button_tuple)
+    right_button_tuple = (right_button_center, ">", 24, right_text_color, right_button_color, (50, 50))
+    buttons_list.append(right_button_tuple)
+    buttons = display_pop_up(dimensions, text_list, buttons_list)
+    pygame.display.update()
+
+    return buttons
+
 
 # Draw the board
 pygame.display.update()
@@ -532,6 +623,7 @@ print_board(board)
 screen.fill(DARKER_GRAY)
 start_button_rect = display_start_menu()
 
+# Boolean flags
 game_started = False
 game_initiated = False
 paused = False
@@ -544,6 +636,7 @@ error_message = ""
 error_message_drawn = False
 displaying_words = False
 displaying_words_menu = False
+showing_player_words = False
 col_idx = -1
 row_idx = -1
 word_idx = 0
@@ -551,6 +644,12 @@ scores = curr_game.get_scores()
 end_screen_displayed = False
 mode = ""
 num_players = 0
+
+# Score and word information
+turn_info = None
+p1_points_gained = 0
+p2_points_gained = 0
+words_made = {1 : [], 2 : []}
 
 #check to make sure the game is not over yet 
 while True:
@@ -589,7 +688,7 @@ while True:
                     sound.play()
                     scr_color = BEIGE
                     txt_color = BLACK
-                    bttn_color = BLUE
+                    bttn_color = ROYAL_BLUE
                     bttn_txt_color = WHITE
                     board_color = MAHOGANY
                     mode = "light"
@@ -690,7 +789,7 @@ while True:
                     continue
             else:
                 continue
-        if game_started and not showing_rack and event.type == pygame.KEYDOWN:  # Go into pause menu
+        if game_started and not showing_rack and event.type == pygame.KEYDOWN and not paused:  # Go into pause menu
             if event.key == pygame.K_p:
                 sound = pygame.mixer.Sound(button_press_sound)
                 sound.play()
@@ -704,6 +803,15 @@ while True:
                 rack_menu_buttons = display_rack(rack, selected_idx)
                 view_board_button_rect = rack_menu_buttons[0]
                 select_button_rect = rack_menu_buttons[1]
+            elif event.key == pygame.K_w:
+                sound = pygame.mixer.Sound(button_press_sound)
+                sound.play()
+                showing_player_words = True
+                page = 0
+                found_words_buttons = display_found_words(page)
+                x_button_rect = found_words_buttons[0]
+                left_button_rect = found_words_buttons[1]
+                right_button_rect = found_words_buttons[2]
         if paused:  # Display pause menu
             if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                     mouse_pos = event.pos
@@ -726,49 +834,77 @@ while True:
                     draw_board(board)
                     continue
             continue
+        if showing_player_words:
+            if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                mouse_pos = event.pos
+                if x_button_rect.collidepoint(mouse_pos):
+                    sound = pygame.mixer.Sound(button_press_sound)
+                    sound.play()
+                    showing_player_words = False
+                    draw_board(board)
+                elif left_button_rect.collidepoint(mouse_pos):
+                    if page > 0:
+                        page -= 1
+                        sound = pygame.mixer.Sound(button_press_sound)
+                        sound.play()
+                        found_words_buttons = display_found_words(page)
+                        x_button_rect = found_words_buttons[0]
+                        left_button_rect = found_words_buttons[1]
+                        right_button_rect = found_words_buttons[2]
+                elif right_button_rect.collidepoint(mouse_pos):
+                    if page < 1:
+                        page += 1
+                        sound = pygame.mixer.Sound(button_press_sound)
+                        sound.play()
+                        found_words_buttons = display_found_words(page)
+                        x_button_rect = found_words_buttons[0]
+                        left_button_rect = found_words_buttons[1]
+                        right_button_rect = found_words_buttons[2]
+                continue
+
         if showing_rack:
             if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
-                    mouse_pos = event.pos
-                    for i in range(2, len(rack_menu_buttons)):  # Start from index 2 to skip 'View Board' and 'Select Tile'
-                        tile_button_rect, rack_idx = rack_menu_buttons[i]
-                        if tile_button_rect.collidepoint(mouse_pos):
-                            if tmp_selected and rack_idx == tmp_selected_idx:
-                                tmp_selected = False
-                                tmp_selected_idx = -1
-                            else:
-                                tmp_selected = True
-                                tmp_selected_idx = rack_idx
-                            sound = pygame.mixer.Sound(tile_drop_sound)
-                            sound.play()
-                            rack_menu_buttons = display_rack(rack, tmp_selected_idx)
-                            continue
-                    if view_board_button_rect.collidepoint(mouse_pos):
-                        sound = pygame.mixer.Sound(button_press_sound)
+                mouse_pos = event.pos
+                for i in range(2, len(rack_menu_buttons)):  # Start from index 2 to skip 'View Board' and 'Select Tile'
+                    tile_button_rect, rack_idx = rack_menu_buttons[i]
+                    if tile_button_rect.collidepoint(mouse_pos):
+                        if tmp_selected and rack_idx == tmp_selected_idx:
+                            tmp_selected = False
+                            tmp_selected_idx = -1
+                        else:
+                            tmp_selected = True
+                            tmp_selected_idx = rack_idx
+                        sound = pygame.mixer.Sound(tile_drop_sound)
                         sound.play()
-                        showing_rack = False
-                        draw_board(board)
-                        tmp_selected = False
+                        rack_menu_buttons = display_rack(rack, tmp_selected_idx)
                         continue
-                    elif tmp_selected and select_button_rect.collidepoint(mouse_pos):
-                        sound = pygame.mixer.Sound(button_press_sound)
-                        sound.play()
-                        selected = tmp_selected
-                        selected_idx = tmp_selected_idx
-                        tmp_selected = False
-                        tmp_selected_idx = -1
-                        showing_rack = False
-                        draw_board(board)
-                        pygame.draw.rect(screen, scr_color, (0, 0, width, square_size))
-                        rack = curr_game.get_rack()
-                        pos_x = event.pos[0]
-                        tile_image = load_tile_image(rack[selected_idx])
-                        tile_rect = tile_image.get_rect(center=(pos_x, square_size / 2))  # Adjust position as needed
-                        screen.blit(tile_image, tile_rect)
-                        pygame.display.update()
-                        continue
-                    else:
-                        selected_idx = -1
-                        continue
+                if view_board_button_rect.collidepoint(mouse_pos):
+                    sound = pygame.mixer.Sound(button_press_sound)
+                    sound.play()
+                    showing_rack = False
+                    draw_board(board)
+                    tmp_selected = False
+                    continue
+                elif tmp_selected and select_button_rect.collidepoint(mouse_pos):
+                    sound = pygame.mixer.Sound(button_press_sound)
+                    sound.play()
+                    selected = tmp_selected
+                    selected_idx = tmp_selected_idx
+                    tmp_selected = False
+                    tmp_selected_idx = -1
+                    showing_rack = False
+                    draw_board(board)
+                    pygame.draw.rect(screen, scr_color, (0, 0, width, square_size))
+                    rack = curr_game.get_rack()
+                    pos_x = event.pos[0]
+                    tile_image = load_tile_image(rack[selected_idx])
+                    tile_rect = tile_image.get_rect(center=(pos_x,   square_size / 2))  # Adjust position as needed
+                    screen.blit(tile_image, tile_rect)
+                    pygame.display.update()
+                    continue
+                else:
+                    selected_idx = -1
+                    continue
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_b or event.key == pygame.K_ESCAPE:
                     sound = pygame.mixer.Sound(button_press_sound)
@@ -798,6 +934,21 @@ while True:
                     #     for col in range(7):
                     #         curr_game.place_piece(0, row)
                     placed_piece = curr_game.place_piece(selected_idx, column)
+                    # Update turn_info
+                    turn_object = curr_game.game_history[-1]
+                    curr_player = 1
+                    if curr_game.get_turn() == 1:
+                        p1_points_gained = turn_object.score_gained
+                        p2_points_gained = 0
+                    else:
+                        p2_points_gained = turn_object.score_gained
+                        p1_points_gained = 0
+                        curr_player = 2
+                    curr_words = words_made[curr_player]
+                    if len(turn_object.words_formed) > 0:
+                        for word in turn_object.words_formed:
+                            curr_words.append(word[0])
+                    words_made[curr_player] = curr_words
                     if placed_piece == 1:
                         sound = pygame.mixer.Sound(error_sound)
                         sound.play()
@@ -815,6 +966,8 @@ while True:
                         sound = pygame.mixer.Sound(score_point_sound)
                         sound.play()
                         scores = new_scores
+                    print(f"Player 1 Score: {new_scores[0]}, Player 2 Score: {new_scores[1]}\nPlayer 1 Words: {words_made.get(1)}, Player 2 Words: {words_made.get(2)}")
+                    print(f"Player {curr_player} Score Gained: {max(p1_points_gained, p2_points_gained)}")
                 else:
                     x_pos = event.pos[0]
                     y_pos = event.pos[1]
