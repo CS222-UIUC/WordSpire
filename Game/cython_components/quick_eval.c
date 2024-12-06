@@ -1481,7 +1481,7 @@ static const char *__pyx_filename;
 /* #### Code section: filename_table ### */
 
 static const char *__pyx_f[] = {
-  "Game/cython_components/quick_eval.pyx",
+  "Game\\\\cython_components\\\\quick_eval.pyx",
   "<stringsource>",
 };
 /* #### Code section: utility_code_proto_before_types ### */
@@ -2098,13 +2098,6 @@ static void __Pyx_Raise(PyObject *type, PyObject *value, PyObject *tb, PyObject 
 /* PyObjectCallOneArg.proto */
 static CYTHON_INLINE PyObject* __Pyx_PyObject_CallOneArg(PyObject *func, PyObject *arg);
 
-/* RaiseUnboundLocalError.proto */
-static CYTHON_INLINE void __Pyx_RaiseUnboundLocalError(const char *varname);
-
-/* PyUnicode_Substring.proto */
-static CYTHON_INLINE PyObject* __Pyx_PyUnicode_Substring(
-            PyObject* text, Py_ssize_t start, Py_ssize_t stop);
-
 /* PyIntBinop.proto */
 #if !CYTHON_COMPILING_IN_PYPY
 static PyObject* __Pyx_PyInt_SubtractObjC(PyObject *op1, PyObject *op2, long intval, int inplace, int zerodivision_check);
@@ -2113,12 +2106,9 @@ static PyObject* __Pyx_PyInt_SubtractObjC(PyObject *op1, PyObject *op2, long int
     (inplace ? PyNumber_InPlaceSubtract(op1, op2) : PyNumber_Subtract(op1, op2))
 #endif
 
-/* ObjectGetItem.proto */
-#if CYTHON_USE_TYPE_SLOTS
-static CYTHON_INLINE PyObject *__Pyx_PyObject_GetItem(PyObject *obj, PyObject *key);
-#else
-#define __Pyx_PyObject_GetItem(obj, key)  PyObject_GetItem(obj, key)
-#endif
+/* PyUnicode_Substring.proto */
+static CYTHON_INLINE PyObject* __Pyx_PyUnicode_Substring(
+            PyObject* text, Py_ssize_t start, Py_ssize_t stop);
 
 /* PyDictContains.proto */
 static CYTHON_INLINE int __Pyx_PyDict_ContainsTF(PyObject* item, PyObject* dict, int eq) {
@@ -2139,6 +2129,13 @@ static PyObject *__Pyx_PyDict_GetItem(PyObject *d, PyObject* key);
 #else
 #define __Pyx_PyDict_GetItem(d, key) PyObject_GetItem(d, key)
 #define __Pyx_PyObject_Dict_GetItem(obj, name)  PyObject_GetItem(obj, name)
+#endif
+
+/* ObjectGetItem.proto */
+#if CYTHON_USE_TYPE_SLOTS
+static CYTHON_INLINE PyObject *__Pyx_PyObject_GetItem(PyObject *obj, PyObject *key);
+#else
+#define __Pyx_PyObject_GetItem(obj, key)  PyObject_GetItem(obj, key)
 #endif
 
 /* SliceObject.proto */
@@ -2404,7 +2401,7 @@ static const char __pyx_k_pyx_unpickle_min_max_bot[] = "__pyx_unpickle_min_max_b
 static const char __pyx_k_min_max_bot_get_best_move[] = "min_max_bot.get_best_move";
 static const char __pyx_k_min_max_bot___reduce_cython[] = "min_max_bot.__reduce_cython__";
 static const char __pyx_k_min_max_bot___setstate_cython[] = "min_max_bot.__setstate_cython__";
-static const char __pyx_k_Game_cython_components_quick_eva[] = "Game/cython_components/quick_eval.pyx";
+static const char __pyx_k_Game_cython_components_quick_eva[] = "Game\\cython_components\\quick_eval.pyx";
 static const char __pyx_k_Incompatible_checksums_0x_x_vs_0[] = "Incompatible checksums (0x%x vs (0x0c5b9f1, 0xe846bf1, 0x8891477) = (height, max_depth, min_word_length, score_dict, width, word_dict))";
 static const char __pyx_k_min_max_bot_order_moves_locals_l[] = "min_max_bot.order_moves.<locals>.<lambda>";
 /* #### Code section: decls ### */
@@ -5080,7 +5077,7 @@ static PyObject *__pyx_f_10quick_eval_11min_max_bot_score_list(struct __pyx_obj_
   int __pyx_v_min_end;
   PyObject *__pyx_v_potential_word = 0;
   PyObject *__pyx_v_start = NULL;
-  PyObject *__pyx_v_end = NULL;
+  long __pyx_v_end;
   Py_UCS4 __pyx_v_letter;
   PyObject *__pyx_r = NULL;
   __Pyx_RefNannyDeclarations
@@ -5088,17 +5085,17 @@ static PyObject *__pyx_f_10quick_eval_11min_max_bot_score_list(struct __pyx_obj_
   PyObject *__pyx_t_2 = NULL;
   PyObject *__pyx_t_3 = NULL;
   PyObject *(*__pyx_t_4)(PyObject *);
-  long __pyx_t_5;
+  int __pyx_t_5;
   PyObject *__pyx_t_6 = NULL;
   PyObject *__pyx_t_7 = NULL;
   PyObject *__pyx_t_8 = NULL;
   int __pyx_t_9;
-  int __pyx_t_10;
-  Py_ssize_t __pyx_t_11;
-  Py_ssize_t __pyx_t_12;
-  PyObject *(*__pyx_t_13)(PyObject *);
-  PyObject *__pyx_t_14 = NULL;
-  Py_ssize_t __pyx_t_15;
+  long __pyx_t_10;
+  long __pyx_t_11;
+  long __pyx_t_12;
+  Py_ssize_t __pyx_t_13;
+  Py_ssize_t __pyx_t_14;
+  PyObject *__pyx_t_15 = NULL;
   void *__pyx_t_16;
   int __pyx_t_17;
   Py_ssize_t __pyx_t_18;
@@ -5121,7 +5118,7 @@ static PyObject *__pyx_f_10quick_eval_11min_max_bot_score_list(struct __pyx_obj_
  *         cdef int score = 0
  *         cdef int max_idx = len(letters)             # <<<<<<<<<<<<<<
  *         cdef str ltrs_string = "".join(letters)
- *         cdef int min_end
+ *         cdef int min_end = 0
  */
   if (unlikely(__pyx_v_letters == Py_None)) {
     PyErr_SetString(PyExc_TypeError, "object of type 'NoneType' has no len()");
@@ -5134,20 +5131,39 @@ static PyObject *__pyx_f_10quick_eval_11min_max_bot_score_list(struct __pyx_obj_
  *         cdef int score = 0
  *         cdef int max_idx = len(letters)
  *         cdef str ltrs_string = "".join(letters)             # <<<<<<<<<<<<<<
- *         cdef int min_end
- *         cdef str potential_word
+ *         cdef int min_end = 0
+ *         cdef str potential_word = ""
  */
   __pyx_t_2 = PyUnicode_Join(__pyx_kp_u__4, __pyx_v_letters); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 115, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   __pyx_v_ltrs_string = ((PyObject*)__pyx_t_2);
   __pyx_t_2 = 0;
 
+  /* "quick_eval.pyx":116
+ *         cdef int max_idx = len(letters)
+ *         cdef str ltrs_string = "".join(letters)
+ *         cdef int min_end = 0             # <<<<<<<<<<<<<<
+ *         cdef str potential_word = ""
+ * 
+ */
+  __pyx_v_min_end = 0;
+
+  /* "quick_eval.pyx":117
+ *         cdef str ltrs_string = "".join(letters)
+ *         cdef int min_end = 0
+ *         cdef str potential_word = ""             # <<<<<<<<<<<<<<
+ * 
+ *         for start in range(key_idx + 1):   # loop over possible start indices
+ */
+  __Pyx_INCREF(__pyx_kp_u__4);
+  __pyx_v_potential_word = __pyx_kp_u__4;
+
   /* "quick_eval.pyx":119
- *         cdef str potential_word
+ *         cdef str potential_word = ""
  * 
  *         for start in range(key_idx + 1):   # loop over possible start indices             # <<<<<<<<<<<<<<
  *             # loop over possible end indices
- *             min_end = max(start + min_len, key_idx + 1)
+ *             min_end = max(start + min_len - 1, key_idx)
  */
   __pyx_t_2 = __Pyx_PyInt_From_long((__pyx_v_key_idx + 1)); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 119, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
@@ -5213,153 +5229,74 @@ static PyObject *__pyx_f_10quick_eval_11min_max_bot_score_list(struct __pyx_obj_
     /* "quick_eval.pyx":121
  *         for start in range(key_idx + 1):   # loop over possible start indices
  *             # loop over possible end indices
- *             min_end = max(start + min_len, key_idx + 1)             # <<<<<<<<<<<<<<
- *             potential_word = potential_word[start:min_end]
- *             for end in range(min_end, max_idx + 1):
+ *             min_end = max(start + min_len - 1, key_idx)             # <<<<<<<<<<<<<<
+ *             # potential_word = ltrs_string[start:min_end]
+ *             for end in range(min_end + 1, max_idx + 1):
  */
-    __pyx_t_5 = (__pyx_v_key_idx + 1);
+    __pyx_t_5 = __pyx_v_key_idx;
     __pyx_t_3 = __Pyx_PyInt_From_int(__pyx_v_min_len); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 121, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_3);
     __pyx_t_6 = PyNumber_Add(__pyx_v_start, __pyx_t_3); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 121, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_6);
     __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-    __pyx_t_7 = __Pyx_PyInt_From_long(__pyx_t_5); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 121, __pyx_L1_error)
+    __pyx_t_3 = __Pyx_PyInt_SubtractObjC(__pyx_t_6, __pyx_int_1, 1, 0, 0); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 121, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_3);
+    __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
+    __pyx_t_7 = __Pyx_PyInt_From_int(__pyx_t_5); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 121, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_7);
-    __pyx_t_8 = PyObject_RichCompare(__pyx_t_7, __pyx_t_6, Py_GT); __Pyx_XGOTREF(__pyx_t_8); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 121, __pyx_L1_error)
+    __pyx_t_8 = PyObject_RichCompare(__pyx_t_7, __pyx_t_3, Py_GT); __Pyx_XGOTREF(__pyx_t_8); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 121, __pyx_L1_error)
     __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
     __pyx_t_9 = __Pyx_PyObject_IsTrue(__pyx_t_8); if (unlikely((__pyx_t_9 < 0))) __PYX_ERR(0, 121, __pyx_L1_error)
     __Pyx_DECREF(__pyx_t_8); __pyx_t_8 = 0;
     if (__pyx_t_9) {
-      __pyx_t_8 = __Pyx_PyInt_From_long(__pyx_t_5); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 121, __pyx_L1_error)
+      __pyx_t_8 = __Pyx_PyInt_From_int(__pyx_t_5); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 121, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_8);
-      __pyx_t_3 = __pyx_t_8;
+      __pyx_t_6 = __pyx_t_8;
       __pyx_t_8 = 0;
     } else {
-      __Pyx_INCREF(__pyx_t_6);
-      __pyx_t_3 = __pyx_t_6;
+      __Pyx_INCREF(__pyx_t_3);
+      __pyx_t_6 = __pyx_t_3;
     }
+    __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+    __pyx_t_5 = __Pyx_PyInt_As_int(__pyx_t_6); if (unlikely((__pyx_t_5 == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 121, __pyx_L1_error)
     __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
-    __pyx_t_10 = __Pyx_PyInt_As_int(__pyx_t_3); if (unlikely((__pyx_t_10 == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 121, __pyx_L1_error)
-    __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-    __pyx_v_min_end = __pyx_t_10;
-
-    /* "quick_eval.pyx":122
- *             # loop over possible end indices
- *             min_end = max(start + min_len, key_idx + 1)
- *             potential_word = potential_word[start:min_end]             # <<<<<<<<<<<<<<
- *             for end in range(min_end, max_idx + 1):
- *                 potential_word += ltrs_string[end - 1]
- */
-    if (unlikely(!__pyx_v_potential_word)) { __Pyx_RaiseUnboundLocalError("potential_word"); __PYX_ERR(0, 122, __pyx_L1_error) }
-    __Pyx_INCREF(__pyx_v_start);
-    __pyx_t_3 = __pyx_v_start;
-    __pyx_t_9 = (__pyx_t_3 == Py_None);
-    if (__pyx_t_9) {
-      __pyx_t_11 = 0;
-    } else {
-      __pyx_t_12 = __Pyx_PyIndex_AsSsize_t(__pyx_t_3); if (unlikely((__pyx_t_12 == (Py_ssize_t)-1) && PyErr_Occurred())) __PYX_ERR(0, 122, __pyx_L1_error)
-      __pyx_t_11 = __pyx_t_12;
-    }
-    __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-    __pyx_t_3 = __Pyx_PyUnicode_Substring(__pyx_v_potential_word, __pyx_t_11, __pyx_v_min_end); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 122, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_3);
-    __Pyx_XDECREF_SET(__pyx_v_potential_word, ((PyObject*)__pyx_t_3));
-    __pyx_t_3 = 0;
+    __pyx_v_min_end = __pyx_t_5;
 
     /* "quick_eval.pyx":123
- *             min_end = max(start + min_len, key_idx + 1)
- *             potential_word = potential_word[start:min_end]
- *             for end in range(min_end, max_idx + 1):             # <<<<<<<<<<<<<<
- *                 potential_word += ltrs_string[end - 1]
- *                 # potential_word = ltrs_string[start:end]
+ *             min_end = max(start + min_len - 1, key_idx)
+ *             # potential_word = ltrs_string[start:min_end]
+ *             for end in range(min_end + 1, max_idx + 1):             # <<<<<<<<<<<<<<
+ *                 # potential_word += ltrs_string[end - 1]
+ *                 potential_word = ltrs_string[start:end]
  */
-    __pyx_t_3 = __Pyx_PyInt_From_int(__pyx_v_min_end); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 123, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_3);
-    __pyx_t_6 = __Pyx_PyInt_From_long((__pyx_v_max_idx + 1)); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 123, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_6);
-    __pyx_t_8 = PyTuple_New(2); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 123, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_8);
-    __Pyx_GIVEREF(__pyx_t_3);
-    if (__Pyx_PyTuple_SET_ITEM(__pyx_t_8, 0, __pyx_t_3)) __PYX_ERR(0, 123, __pyx_L1_error);
-    __Pyx_GIVEREF(__pyx_t_6);
-    if (__Pyx_PyTuple_SET_ITEM(__pyx_t_8, 1, __pyx_t_6)) __PYX_ERR(0, 123, __pyx_L1_error);
-    __pyx_t_3 = 0;
-    __pyx_t_6 = 0;
-    __pyx_t_6 = __Pyx_PyObject_Call(__pyx_builtin_range, __pyx_t_8, NULL); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 123, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_6);
-    __Pyx_DECREF(__pyx_t_8); __pyx_t_8 = 0;
-    if (likely(PyList_CheckExact(__pyx_t_6)) || PyTuple_CheckExact(__pyx_t_6)) {
-      __pyx_t_8 = __pyx_t_6; __Pyx_INCREF(__pyx_t_8);
-      __pyx_t_11 = 0;
-      __pyx_t_13 = NULL;
-    } else {
-      __pyx_t_11 = -1; __pyx_t_8 = PyObject_GetIter(__pyx_t_6); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 123, __pyx_L1_error)
-      __Pyx_GOTREF(__pyx_t_8);
-      __pyx_t_13 = __Pyx_PyObject_GetIterNextFunc(__pyx_t_8); if (unlikely(!__pyx_t_13)) __PYX_ERR(0, 123, __pyx_L1_error)
-    }
-    __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
-    for (;;) {
-      if (likely(!__pyx_t_13)) {
-        if (likely(PyList_CheckExact(__pyx_t_8))) {
-          {
-            Py_ssize_t __pyx_temp = __Pyx_PyList_GET_SIZE(__pyx_t_8);
-            #if !CYTHON_ASSUME_SAFE_MACROS
-            if (unlikely((__pyx_temp < 0))) __PYX_ERR(0, 123, __pyx_L1_error)
-            #endif
-            if (__pyx_t_11 >= __pyx_temp) break;
-          }
-          #if CYTHON_ASSUME_SAFE_MACROS && !CYTHON_AVOID_BORROWED_REFS
-          __pyx_t_6 = PyList_GET_ITEM(__pyx_t_8, __pyx_t_11); __Pyx_INCREF(__pyx_t_6); __pyx_t_11++; if (unlikely((0 < 0))) __PYX_ERR(0, 123, __pyx_L1_error)
-          #else
-          __pyx_t_6 = __Pyx_PySequence_ITEM(__pyx_t_8, __pyx_t_11); __pyx_t_11++; if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 123, __pyx_L1_error)
-          __Pyx_GOTREF(__pyx_t_6);
-          #endif
-        } else {
-          {
-            Py_ssize_t __pyx_temp = __Pyx_PyTuple_GET_SIZE(__pyx_t_8);
-            #if !CYTHON_ASSUME_SAFE_MACROS
-            if (unlikely((__pyx_temp < 0))) __PYX_ERR(0, 123, __pyx_L1_error)
-            #endif
-            if (__pyx_t_11 >= __pyx_temp) break;
-          }
-          #if CYTHON_ASSUME_SAFE_MACROS && !CYTHON_AVOID_BORROWED_REFS
-          __pyx_t_6 = PyTuple_GET_ITEM(__pyx_t_8, __pyx_t_11); __Pyx_INCREF(__pyx_t_6); __pyx_t_11++; if (unlikely((0 < 0))) __PYX_ERR(0, 123, __pyx_L1_error)
-          #else
-          __pyx_t_6 = __Pyx_PySequence_ITEM(__pyx_t_8, __pyx_t_11); __pyx_t_11++; if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 123, __pyx_L1_error)
-          __Pyx_GOTREF(__pyx_t_6);
-          #endif
-        }
-      } else {
-        __pyx_t_6 = __pyx_t_13(__pyx_t_8);
-        if (unlikely(!__pyx_t_6)) {
-          PyObject* exc_type = PyErr_Occurred();
-          if (exc_type) {
-            if (likely(__Pyx_PyErr_GivenExceptionMatches(exc_type, PyExc_StopIteration))) PyErr_Clear();
-            else __PYX_ERR(0, 123, __pyx_L1_error)
-          }
-          break;
-        }
-        __Pyx_GOTREF(__pyx_t_6);
-      }
-      __Pyx_XDECREF_SET(__pyx_v_end, __pyx_t_6);
-      __pyx_t_6 = 0;
+    __pyx_t_10 = (__pyx_v_max_idx + 1);
+    __pyx_t_11 = __pyx_t_10;
+    for (__pyx_t_12 = (__pyx_v_min_end + 1); __pyx_t_12 < __pyx_t_11; __pyx_t_12+=1) {
+      __pyx_v_end = __pyx_t_12;
 
-      /* "quick_eval.pyx":124
- *             potential_word = potential_word[start:min_end]
- *             for end in range(min_end, max_idx + 1):
- *                 potential_word += ltrs_string[end - 1]             # <<<<<<<<<<<<<<
- *                 # potential_word = ltrs_string[start:end]
+      /* "quick_eval.pyx":125
+ *             for end in range(min_end + 1, max_idx + 1):
+ *                 # potential_word += ltrs_string[end - 1]
+ *                 potential_word = ltrs_string[start:end]             # <<<<<<<<<<<<<<
  * 
+ *                 # forward
  */
-      __pyx_t_6 = __Pyx_PyInt_SubtractObjC(__pyx_v_end, __pyx_int_1, 1, 0, 0); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 124, __pyx_L1_error)
-      __Pyx_GOTREF(__pyx_t_6);
-      __pyx_t_3 = __Pyx_PyObject_GetItem(__pyx_v_ltrs_string, __pyx_t_6); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 124, __pyx_L1_error)
-      __Pyx_GOTREF(__pyx_t_3);
+      if (unlikely(__pyx_v_ltrs_string == Py_None)) {
+        PyErr_SetString(PyExc_TypeError, "'NoneType' object is not subscriptable");
+        __PYX_ERR(0, 125, __pyx_L1_error)
+      }
+      __Pyx_INCREF(__pyx_v_start);
+      __pyx_t_6 = __pyx_v_start;
+      __pyx_t_9 = (__pyx_t_6 == Py_None);
+      if (__pyx_t_9) {
+        __pyx_t_13 = 0;
+      } else {
+        __pyx_t_14 = __Pyx_PyIndex_AsSsize_t(__pyx_t_6); if (unlikely((__pyx_t_14 == (Py_ssize_t)-1) && PyErr_Occurred())) __PYX_ERR(0, 125, __pyx_L1_error)
+        __pyx_t_13 = __pyx_t_14;
+      }
       __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
-      __pyx_t_6 = PyNumber_InPlaceAdd(__pyx_v_potential_word, __pyx_t_3); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 124, __pyx_L1_error)
+      __pyx_t_6 = __Pyx_PyUnicode_Substring(__pyx_v_ltrs_string, __pyx_t_13, __pyx_v_end); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 125, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_6);
-      __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-      if (!(likely(PyUnicode_CheckExact(__pyx_t_6))||((__pyx_t_6) == Py_None) || __Pyx_RaiseUnexpectedTypeError("unicode", __pyx_t_6))) __PYX_ERR(0, 124, __pyx_L1_error)
       __Pyx_DECREF_SET(__pyx_v_potential_word, ((PyObject*)__pyx_t_6));
       __pyx_t_6 = 0;
 
@@ -5384,16 +5321,12 @@ static PyObject *__pyx_f_10quick_eval_11min_max_bot_score_list(struct __pyx_obj_
  *                         score += self.score_dict[letter]
  * 
  */
-        if (unlikely(__pyx_v_potential_word == Py_None)) {
-          PyErr_SetString(PyExc_TypeError, "'NoneType' is not iterable");
-          __PYX_ERR(0, 130, __pyx_L1_error)
-        }
         __Pyx_INCREF(__pyx_v_potential_word);
-        __pyx_t_14 = __pyx_v_potential_word;
-        __pyx_t_17 = __Pyx_init_unicode_iteration(__pyx_t_14, (&__pyx_t_15), (&__pyx_t_16), (&__pyx_t_10)); if (unlikely(__pyx_t_17 == ((int)-1))) __PYX_ERR(0, 130, __pyx_L1_error)
-        for (__pyx_t_18 = 0; __pyx_t_18 < __pyx_t_15; __pyx_t_18++) {
-          __pyx_t_12 = __pyx_t_18;
-          __pyx_v_letter = __Pyx_PyUnicode_READ(__pyx_t_10, __pyx_t_16, __pyx_t_12);
+        __pyx_t_15 = __pyx_v_potential_word;
+        __pyx_t_17 = __Pyx_init_unicode_iteration(__pyx_t_15, (&__pyx_t_14), (&__pyx_t_16), (&__pyx_t_5)); if (unlikely(__pyx_t_17 == ((int)-1))) __PYX_ERR(0, 130, __pyx_L1_error)
+        for (__pyx_t_18 = 0; __pyx_t_18 < __pyx_t_14; __pyx_t_18++) {
+          __pyx_t_13 = __pyx_t_18;
+          __pyx_v_letter = __Pyx_PyUnicode_READ(__pyx_t_5, __pyx_t_16, __pyx_t_13);
 
           /* "quick_eval.pyx":131
  *                     # score per letter in word
@@ -5410,18 +5343,18 @@ static PyObject *__pyx_f_10quick_eval_11min_max_bot_score_list(struct __pyx_obj_
           }
           __pyx_t_3 = __Pyx_PyUnicode_FromOrdinal(__pyx_v_letter); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 131, __pyx_L1_error)
           __Pyx_GOTREF(__pyx_t_3);
-          __pyx_t_7 = __Pyx_PyDict_GetItem(__pyx_v_self->score_dict, __pyx_t_3); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 131, __pyx_L1_error)
-          __Pyx_GOTREF(__pyx_t_7);
+          __pyx_t_8 = __Pyx_PyDict_GetItem(__pyx_v_self->score_dict, __pyx_t_3); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 131, __pyx_L1_error)
+          __Pyx_GOTREF(__pyx_t_8);
           __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-          __pyx_t_3 = PyNumber_InPlaceAdd(__pyx_t_6, __pyx_t_7); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 131, __pyx_L1_error)
+          __pyx_t_3 = PyNumber_InPlaceAdd(__pyx_t_6, __pyx_t_8); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 131, __pyx_L1_error)
           __Pyx_GOTREF(__pyx_t_3);
           __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
-          __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
+          __Pyx_DECREF(__pyx_t_8); __pyx_t_8 = 0;
           __pyx_t_17 = __Pyx_PyInt_As_int(__pyx_t_3); if (unlikely((__pyx_t_17 == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 131, __pyx_L1_error)
           __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
           __pyx_v_score = __pyx_t_17;
         }
-        __Pyx_DECREF(__pyx_t_14); __pyx_t_14 = 0;
+        __Pyx_DECREF(__pyx_t_15); __pyx_t_15 = 0;
 
         /* "quick_eval.pyx":128
  * 
@@ -5466,11 +5399,11 @@ static PyObject *__pyx_f_10quick_eval_11min_max_bot_score_list(struct __pyx_obj_
  * 
  */
         __Pyx_INCREF(__pyx_v_potential_word);
-        __pyx_t_14 = __pyx_v_potential_word;
-        __pyx_t_17 = __Pyx_init_unicode_iteration(__pyx_t_14, (&__pyx_t_12), (&__pyx_t_16), (&__pyx_t_10)); if (unlikely(__pyx_t_17 == ((int)-1))) __PYX_ERR(0, 137, __pyx_L1_error)
-        for (__pyx_t_18 = 0; __pyx_t_18 < __pyx_t_12; __pyx_t_18++) {
-          __pyx_t_15 = __pyx_t_18;
-          __pyx_v_letter = __Pyx_PyUnicode_READ(__pyx_t_10, __pyx_t_16, __pyx_t_15);
+        __pyx_t_15 = __pyx_v_potential_word;
+        __pyx_t_17 = __Pyx_init_unicode_iteration(__pyx_t_15, (&__pyx_t_13), (&__pyx_t_16), (&__pyx_t_5)); if (unlikely(__pyx_t_17 == ((int)-1))) __PYX_ERR(0, 137, __pyx_L1_error)
+        for (__pyx_t_18 = 0; __pyx_t_18 < __pyx_t_13; __pyx_t_18++) {
+          __pyx_t_14 = __pyx_t_18;
+          __pyx_v_letter = __Pyx_PyUnicode_READ(__pyx_t_5, __pyx_t_16, __pyx_t_14);
 
           /* "quick_eval.pyx":138
  *                     # score per letter in word
@@ -5485,20 +5418,20 @@ static PyObject *__pyx_f_10quick_eval_11min_max_bot_score_list(struct __pyx_obj_
             PyErr_SetString(PyExc_TypeError, "'NoneType' object is not subscriptable");
             __PYX_ERR(0, 138, __pyx_L1_error)
           }
-          __pyx_t_7 = __Pyx_PyUnicode_FromOrdinal(__pyx_v_letter); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 138, __pyx_L1_error)
-          __Pyx_GOTREF(__pyx_t_7);
-          __pyx_t_6 = __Pyx_PyDict_GetItem(__pyx_v_self->score_dict, __pyx_t_7); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 138, __pyx_L1_error)
+          __pyx_t_8 = __Pyx_PyUnicode_FromOrdinal(__pyx_v_letter); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 138, __pyx_L1_error)
+          __Pyx_GOTREF(__pyx_t_8);
+          __pyx_t_6 = __Pyx_PyDict_GetItem(__pyx_v_self->score_dict, __pyx_t_8); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 138, __pyx_L1_error)
           __Pyx_GOTREF(__pyx_t_6);
-          __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
-          __pyx_t_7 = PyNumber_InPlaceAdd(__pyx_t_3, __pyx_t_6); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 138, __pyx_L1_error)
-          __Pyx_GOTREF(__pyx_t_7);
+          __Pyx_DECREF(__pyx_t_8); __pyx_t_8 = 0;
+          __pyx_t_8 = PyNumber_InPlaceAdd(__pyx_t_3, __pyx_t_6); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 138, __pyx_L1_error)
+          __Pyx_GOTREF(__pyx_t_8);
           __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
           __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
-          __pyx_t_17 = __Pyx_PyInt_As_int(__pyx_t_7); if (unlikely((__pyx_t_17 == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 138, __pyx_L1_error)
-          __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
+          __pyx_t_17 = __Pyx_PyInt_As_int(__pyx_t_8); if (unlikely((__pyx_t_17 == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 138, __pyx_L1_error)
+          __Pyx_DECREF(__pyx_t_8); __pyx_t_8 = 0;
           __pyx_v_score = __pyx_t_17;
         }
-        __Pyx_DECREF(__pyx_t_14); __pyx_t_14 = 0;
+        __Pyx_DECREF(__pyx_t_15); __pyx_t_15 = 0;
 
         /* "quick_eval.pyx":135
  *                 # backward
@@ -5508,23 +5441,14 @@ static PyObject *__pyx_f_10quick_eval_11min_max_bot_score_list(struct __pyx_obj_
  *                     for letter in potential_word:
  */
       }
-
-      /* "quick_eval.pyx":123
- *             min_end = max(start + min_len, key_idx + 1)
- *             potential_word = potential_word[start:min_end]
- *             for end in range(min_end, max_idx + 1):             # <<<<<<<<<<<<<<
- *                 potential_word += ltrs_string[end - 1]
- *                 # potential_word = ltrs_string[start:end]
- */
     }
-    __Pyx_DECREF(__pyx_t_8); __pyx_t_8 = 0;
 
     /* "quick_eval.pyx":119
- *         cdef str potential_word
+ *         cdef str potential_word = ""
  * 
  *         for start in range(key_idx + 1):   # loop over possible start indices             # <<<<<<<<<<<<<<
  *             # loop over possible end indices
- *             min_end = max(start + min_len, key_idx + 1)
+ *             min_end = max(start + min_len - 1, key_idx)
  */
   }
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
@@ -5558,14 +5482,13 @@ static PyObject *__pyx_f_10quick_eval_11min_max_bot_score_list(struct __pyx_obj_
   __Pyx_XDECREF(__pyx_t_6);
   __Pyx_XDECREF(__pyx_t_7);
   __Pyx_XDECREF(__pyx_t_8);
-  __Pyx_XDECREF(__pyx_t_14);
+  __Pyx_XDECREF(__pyx_t_15);
   __Pyx_AddTraceback("quick_eval.min_max_bot.score_list", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __pyx_r = 0;
   __pyx_L0:;
   __Pyx_XDECREF(__pyx_v_ltrs_string);
   __Pyx_XDECREF(__pyx_v_potential_word);
   __Pyx_XDECREF(__pyx_v_start);
-  __Pyx_XDECREF(__pyx_v_end);
   __Pyx_XGIVEREF(__pyx_r);
   __Pyx_RefNannyFinishContext();
   return __pyx_r;
@@ -11046,38 +10969,6 @@ static CYTHON_INLINE PyObject* __Pyx_PyObject_CallOneArg(PyObject *func, PyObjec
     return __Pyx_PyObject_FastCall(func, args+1, 1 | __Pyx_PY_VECTORCALL_ARGUMENTS_OFFSET);
 }
 
-/* RaiseUnboundLocalError */
-static CYTHON_INLINE void __Pyx_RaiseUnboundLocalError(const char *varname) {
-    PyErr_Format(PyExc_UnboundLocalError, "local variable '%s' referenced before assignment", varname);
-}
-
-/* PyUnicode_Substring */
-static CYTHON_INLINE PyObject* __Pyx_PyUnicode_Substring(
-            PyObject* text, Py_ssize_t start, Py_ssize_t stop) {
-    Py_ssize_t length;
-    if (unlikely(__Pyx_PyUnicode_READY(text) == -1)) return NULL;
-    length = __Pyx_PyUnicode_GET_LENGTH(text);
-    if (start < 0) {
-        start += length;
-        if (start < 0)
-            start = 0;
-    }
-    if (stop < 0)
-        stop += length;
-    else if (stop > length)
-        stop = length;
-    if (stop <= start)
-        return __Pyx_NewRef(__pyx_empty_unicode);
-    if (start == 0 && stop == length)
-        return __Pyx_NewRef(text);
-#if CYTHON_PEP393_ENABLED
-    return PyUnicode_FromKindAndData(PyUnicode_KIND(text),
-        PyUnicode_1BYTE_DATA(text) + start*PyUnicode_KIND(text), stop-start);
-#else
-    return PyUnicode_FromUnicode(PyUnicode_AS_UNICODE(text)+start, stop-start);
-#endif
-}
-
 /* PyIntBinop */
 #if !CYTHON_COMPILING_IN_PYPY
 static PyObject* __Pyx_PyInt_SubtractObjC(PyObject *op1, PyObject *op2, long intval, int inplace, int zerodivision_check) {
@@ -11211,6 +11102,77 @@ static PyObject* __Pyx_PyInt_SubtractObjC(PyObject *op1, PyObject *op2, long int
 }
 #endif
 
+/* PyUnicode_Substring */
+static CYTHON_INLINE PyObject* __Pyx_PyUnicode_Substring(
+            PyObject* text, Py_ssize_t start, Py_ssize_t stop) {
+    Py_ssize_t length;
+    if (unlikely(__Pyx_PyUnicode_READY(text) == -1)) return NULL;
+    length = __Pyx_PyUnicode_GET_LENGTH(text);
+    if (start < 0) {
+        start += length;
+        if (start < 0)
+            start = 0;
+    }
+    if (stop < 0)
+        stop += length;
+    else if (stop > length)
+        stop = length;
+    if (stop <= start)
+        return __Pyx_NewRef(__pyx_empty_unicode);
+    if (start == 0 && stop == length)
+        return __Pyx_NewRef(text);
+#if CYTHON_PEP393_ENABLED
+    return PyUnicode_FromKindAndData(PyUnicode_KIND(text),
+        PyUnicode_1BYTE_DATA(text) + start*PyUnicode_KIND(text), stop-start);
+#else
+    return PyUnicode_FromUnicode(PyUnicode_AS_UNICODE(text)+start, stop-start);
+#endif
+}
+
+/* unicode_iter */
+static CYTHON_INLINE int __Pyx_init_unicode_iteration(
+    PyObject* ustring, Py_ssize_t *length, void** data, int *kind) {
+#if CYTHON_COMPILING_IN_LIMITED_API
+    *kind   = 0;
+    *length = PyUnicode_GetLength(ustring);
+    *data   = (void*)ustring;
+#elif CYTHON_PEP393_ENABLED
+    if (unlikely(__Pyx_PyUnicode_READY(ustring) < 0)) return -1;
+    *kind   = PyUnicode_KIND(ustring);
+    *length = PyUnicode_GET_LENGTH(ustring);
+    *data   = PyUnicode_DATA(ustring);
+#else
+    *kind   = 0;
+    *length = PyUnicode_GET_SIZE(ustring);
+    *data   = (void*)PyUnicode_AS_UNICODE(ustring);
+#endif
+    return 0;
+}
+
+/* DictGetItem */
+#if PY_MAJOR_VERSION >= 3 && !CYTHON_COMPILING_IN_PYPY
+static PyObject *__Pyx_PyDict_GetItem(PyObject *d, PyObject* key) {
+    PyObject *value;
+    value = PyDict_GetItemWithError(d, key);
+    if (unlikely(!value)) {
+        if (!PyErr_Occurred()) {
+            if (unlikely(PyTuple_Check(key))) {
+                PyObject* args = PyTuple_Pack(1, key);
+                if (likely(args)) {
+                    PyErr_SetObject(PyExc_KeyError, args);
+                    Py_DECREF(args);
+                }
+            } else {
+                PyErr_SetObject(PyExc_KeyError, key);
+            }
+        }
+        return NULL;
+    }
+    Py_INCREF(value);
+    return value;
+}
+#endif
+
 /* ObjectGetItem */
 #if CYTHON_USE_TYPE_SLOTS
 static PyObject *__Pyx_PyObject_GetIndex(PyObject *obj, PyObject *index) {
@@ -11258,50 +11220,6 @@ static PyObject *__Pyx_PyObject_GetItem(PyObject *obj, PyObject *key) {
         return __Pyx_PyObject_GetIndex(obj, key);
     }
     return __Pyx_PyObject_GetItem_Slow(obj, key);
-}
-#endif
-
-/* unicode_iter */
-static CYTHON_INLINE int __Pyx_init_unicode_iteration(
-    PyObject* ustring, Py_ssize_t *length, void** data, int *kind) {
-#if CYTHON_COMPILING_IN_LIMITED_API
-    *kind   = 0;
-    *length = PyUnicode_GetLength(ustring);
-    *data   = (void*)ustring;
-#elif CYTHON_PEP393_ENABLED
-    if (unlikely(__Pyx_PyUnicode_READY(ustring) < 0)) return -1;
-    *kind   = PyUnicode_KIND(ustring);
-    *length = PyUnicode_GET_LENGTH(ustring);
-    *data   = PyUnicode_DATA(ustring);
-#else
-    *kind   = 0;
-    *length = PyUnicode_GET_SIZE(ustring);
-    *data   = (void*)PyUnicode_AS_UNICODE(ustring);
-#endif
-    return 0;
-}
-
-/* DictGetItem */
-#if PY_MAJOR_VERSION >= 3 && !CYTHON_COMPILING_IN_PYPY
-static PyObject *__Pyx_PyDict_GetItem(PyObject *d, PyObject* key) {
-    PyObject *value;
-    value = PyDict_GetItemWithError(d, key);
-    if (unlikely(!value)) {
-        if (!PyErr_Occurred()) {
-            if (unlikely(PyTuple_Check(key))) {
-                PyObject* args = PyTuple_Pack(1, key);
-                if (likely(args)) {
-                    PyErr_SetObject(PyExc_KeyError, args);
-                    Py_DECREF(args);
-                }
-            } else {
-                PyErr_SetObject(PyExc_KeyError, key);
-            }
-        }
-        return NULL;
-    }
-    Py_INCREF(value);
-    return value;
 }
 #endif
 

@@ -113,16 +113,15 @@ cdef class min_max_bot:
         cdef int score = 0
         cdef int max_idx = len(letters)
         cdef str ltrs_string = "".join(letters)
-        cdef int min_end
-        cdef str potential_word
+        cdef int min_end = 0
+        cdef str potential_word = ""
 
         for start in range(key_idx + 1):   # loop over possible start indices
             # loop over possible end indices
-            min_end = max(start + min_len, key_idx + 1)
-            potential_word = potential_word[start:min_end]
-            for end in range(min_end, max_idx + 1):
+            min_end = max(start + min_len - 1, key_idx)
+            potential_word = ltrs_string[start:min_end]
+            for end in range(min_end + 1, max_idx + 1):
                 potential_word += ltrs_string[end - 1]
-                # potential_word = ltrs_string[start:end]
 
                 # forward
                 if potential_word in self.word_dict:
