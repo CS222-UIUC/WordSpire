@@ -1,12 +1,12 @@
 # min_max_bot.pyx
 # cython: language_level=3
 
-import random
-import math
-import copy
-import sys
 from typing import List, Dict, Tuple
 from libc.limits cimport INT_MAX
+from libc.stdlib cimport rand, srand
+from libc.time cimport time
+
+srand(<unsigned int>time(NULL))
 
 cdef class min_max_bot:
     cdef int max_depth
@@ -77,7 +77,7 @@ cdef class min_max_bot:
             for idx, letter in enumerate(rack):
                 new_board, gained_score = self.update_board(board, letter, col)
                 moves.append(((idx, col), new_board, rack[:idx] + rack[idx+1:], gained_score))
-        moves.sort(reverse=True, key=lambda i: (i[3], random.random()))
+        moves.sort(reverse=True, key=lambda i: (i[3], rand()))
         return moves
 
     cdef get_available_columns(self, List[List[str]] board):
@@ -88,7 +88,7 @@ cdef class min_max_bot:
         return available_columns
 
     cdef update_board(self, List[List[str]] board, str letter, int col_idx):
-        cdef List[List[str]] board_copy = copy.deepcopy(board)
+        cdef List[List[str]] board_copy = [[x for x in y] for y in board]
 
         for row_idx, row in enumerate(board_copy):
             if row[col_idx] == "*":
