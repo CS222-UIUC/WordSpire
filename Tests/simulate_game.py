@@ -17,59 +17,67 @@ from Back_end import *  # noqa
 # pr.enable()
 
 num_games = int(input('Enter number of games to simulate: '))
-print_enable = int(input('Enable printing (0, 1): '))
+should_print = int(input('Enable printing (0, 1): '))
 
-depth_1 = int(input('Enter bot_1 depth (-1 for random): '))
-depth_2 = int(input('Enter bot_2 depth (-1 for random): '))
-
-mode = "vs_bot"
+# depth_1 = int(input('Enter bot_1 depth (-1 for random): '))
+# depth_2 = int(input('Enter bot_2 depth (-1 for random): '))
     
 # player 1 wins, losses, ties
-results = [0.0, 0.0, 0.0]
 
-for i in tqdm(range(num_games)):
-    game_instance = Game(min_word_length=4, mode=mode)
+def simulator(bot_1_depth, bot_2_depth, simulations, print_enable = False):
+    results = [0.0, 0.0, 0.0]
+    alternate = 0
 
-    if (print_enable):
-        print(game_instance)
-
-    game_state = 0
-
-    while game_state == 0:
-        if (game_instance.get_turn() == 0 and depth_1 != -1):
-            best_move = game_instance.get_best_move(depth_1)
-            game_instance.place_piece(*best_move)
-        elif (game_instance.get_turn() == 1 and depth_2 != -1):
-            best_move = game_instance.get_best_move(depth_2)
-            game_instance.place_piece(*best_move)
-        else:
-            rand_rack_index = random.randint(0, game_instance.rack_size - 1)
-
-            available_columns = game_instance.get_available_columns()
-            rand_col = random.randint(0, len(available_columns) - 1)
-
-            game_instance.place_piece(rand_rack_index, available_columns[rand_col])
+    for i in range(simulations):
+        game_instance = Game(min_word_length=4, mode="vs_bot")
 
         if (print_enable):
             print(game_instance)
 
-        game_state = game_instance.get_game_state()
+        game_state = 0
 
-    if (print_enable):
-        if game_state == 1:
-            print('Player 1 wins.')
-        elif game_state == 2:
-            print('Player 2 wins.')
-        else:
-            print('Tie game.')
-    
-    results[game_state - 1] += 1
+        while game_state == 0:
+            if (game_instance.get_turn() == 0 and bot_1_depth != -1):
+                best_move = game_instance.get_best_move(bot_1_depth)
+                game_instance.place_piece(*best_move)
+            elif (game_instance.get_turn() == 1 and bot_2_depth != -1):
+                best_move = game_instance.get_best_move(bot_2_depth)
+                game_instance.place_piece(*best_move)
+            else:
+                rand_rack_index = random.randint(0, game_instance.rack_size - 1)
 
-print(f"\nResults: {results}\n")
-print("Win rates:")
-print(f"   Bot 1 (Depth {depth_1}): {100 * results[0] / num_games}%")
-print(f"   Bot 2 (Depth {depth_2}): {100 * results[1] / num_games}%")
-print(f"   Ties: {100 * results[2] / num_games}%")
+                available_columns = game_instance.get_available_columns()
+                rand_col = random.randint(0, len(available_columns) - 1)
+
+                game_instance.place_piece(rand_rack_index, available_columns[rand_col])
+
+            if (print_enable):
+                print(game_instance)
+
+            game_state = game_instance.get_game_state()
+
+        if (print_enable):
+            if game_state == 1:
+                print('Player 1 wins.')
+            elif game_state == 2:
+                print('Player 2 wins.')
+            else:
+                print('Tie game.')
+        
+        results[game_state - 1] += 1
+        alternate = not alternate
+
+    return results
+
+for depth_1 in range(1, 8):
+    for depth_2 in range(1, depth_1):
+        results = simulator(depth_1, depth_2, num_games)
+
+        print(f"\n---------- Depth {depth_1} vs {depth_2} Results: ------------")
+        print("Win rates:")
+        print(f"   Bot 1 (Depth {depth_1}): {100 * results[0] / num_games}%")
+        print(f"   Bot 2 (Depth {depth_2}): {100 * results[1] / num_games}%")
+        print(f"   Ties: {100 * results[2] / num_games}%")
 
 
 # pr.disable()

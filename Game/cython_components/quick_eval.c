@@ -1485,7 +1485,7 @@ static const char *__pyx_filename;
 /* #### Code section: filename_table ### */
 
 static const char *__pyx_f[] = {
-  "Game\\\\cython_components\\\\quick_eval.pyx",
+  "Game/cython_components/quick_eval.pyx",
   "<stringsource>",
 };
 /* #### Code section: utility_code_proto_before_types ### */
@@ -2422,7 +2422,7 @@ static const char __pyx_k_pyx_unpickle_min_max_bot[] = "__pyx_unpickle_min_max_b
 static const char __pyx_k_min_max_bot_get_best_move[] = "min_max_bot.get_best_move";
 static const char __pyx_k_min_max_bot___reduce_cython[] = "min_max_bot.__reduce_cython__";
 static const char __pyx_k_min_max_bot___setstate_cython[] = "min_max_bot.__setstate_cython__";
-static const char __pyx_k_Game_cython_components_quick_eva[] = "Game\\cython_components\\quick_eval.pyx";
+static const char __pyx_k_Game_cython_components_quick_eva[] = "Game/cython_components/quick_eval.pyx";
 static const char __pyx_k_Incompatible_checksums_0x_x_vs_0[] = "Incompatible checksums (0x%x vs (0x0c5b9f1, 0xe846bf1, 0x8891477) = (height, max_depth, min_word_length, score_dict, width, word_dict))";
 static const char __pyx_k_min_max_bot_order_moves_locals_l[] = "min_max_bot.order_moves.<locals>.<lambda>";
 /* #### Code section: decls ### */
