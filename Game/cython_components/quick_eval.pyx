@@ -24,7 +24,7 @@ cdef class min_max_bot:
         self.score_dict = score_dict
         self.word_dict = word_dict
 
-    def get_best_move(self, List[List[str]] board, List[str] rack, List[str] bag, chosen_depth=self.max_depth):
+    def get_best_move(self, List[List[str]] board, List[str] rack, List[str] bag, int chosen_depth):
         cdef int depth = min(chosen_depth, len(rack))
         val, move = self.simple_alphabeta(board, rack, 0, depth, -INT_MAX, INT_MAX, True)
         return move
