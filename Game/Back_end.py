@@ -390,14 +390,16 @@ class Game:
 
         return available_columns
 
-    def get_best_move(self):
+    def get_best_move(self, bot_depth=None):
         """
         Function to find the best move according to the bot 
 
         Return:
             move (tuple[int]): the chosen move (rack index, col index)
         """
-        return self.bot.get_best_move(self.board, self.rack, self.letter_bag)
+        if bot_depth is None:
+            bot_depth = self.bot_depth
+        return self.bot.get_best_move(self.board, self.rack, self.letter_bag, bot_depth)
 
     def __str__(self):
         """
