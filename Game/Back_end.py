@@ -5,6 +5,7 @@ import sys
 import os
 import math
 import copy
+# import quick_eval 
 from collections import defaultdict
 
 # default letters and their value
@@ -46,6 +47,7 @@ class Game:
             min_word_length (int): minimum length of words that can be scored
             num_multipliers (int): number of bonus points added to random tile locations
             len_bonus (dict): a dictionary of bonus points for length of words
+            bot_depth (int): the maximum depth of the bot 
 
         Return:
             Void
@@ -82,7 +84,7 @@ class Game:
         # create bot
         if self.mode == "vs_bot":
             self.bot = min_max_bot(min(bot_depth, self.rack_size), self.height, self.width,
-                                   self.min_word_length, self.score_dict, self.dict)
+                                              self.min_word_length, self.score_dict, self.dict)
 
         # game history (list of turns)
         self.game_history = []
@@ -184,15 +186,16 @@ class Game:
 
         return 1  # returns 1 error code for column full
 
-    def search_list(self, letters: list, key_idx: int, min_len: int, start_pos: tuple[int, int], end_pos: tuple[int, int], bonus):
+    def search_list(self, letters: list, key_idx: int, min_len: int, start_pos: tuple[int, int], end_pos: tuple[int, int], bonus: int):
         """
         Finds all valid words and their definitions in a single row/list of characters
 
             letters (list): list of upercase letters in a row
             key_idx: (int): index of letter required to be in word
             min_len (int):  minimum length words to score
-            start_pos (tuple(int,int)):
-            end_pos (tuple(int,int)):
+            start_pos (tuple(int,int)): starting position of the list of letters (col, row)
+            end_pos (tuple(int,int)): ending position of the list of letters (col, row)
+            bonus (int): bonus score for tile of chosen letter 
 
         Return:
             words (list((string, int, string, ((int, int), (int, int))))): list of words, score, their definitions, and location on the board
@@ -388,6 +391,12 @@ class Game:
         return available_columns
 
     def get_best_move(self):
+        """
+        Function to find the best move according to the bot 
+
+        Return:
+            move (tuple[int]): the chosen move (rack index, col index)
+        """
         return self.bot.get_best_move(self.board, self.rack, self.letter_bag)
 
     def __str__(self):

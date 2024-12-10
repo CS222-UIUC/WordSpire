@@ -29,8 +29,6 @@ if (mode == "vs_bot"):
 results = [0.0, 0.0, 0.0]
 
 for i in tqdm(range(num_games)):
-    if (i % 100 == 0):
-        print(i)
     game_instance = Game(min_word_length=4, mode=mode, bot_depth=depth)
 
     if (print_enable):
