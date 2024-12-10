@@ -85,6 +85,7 @@ class Game:
         if self.mode == "vs_bot":
             self.bot = quick_eval.min_max_bot(min(bot_depth, self.rack_size), self.height, self.width,
                                               self.min_word_length, self.score_dict, self.dict)
+            self.bot_depth = bot_depth
 
         # game history (list of turns)
         self.game_history = []
