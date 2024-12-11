@@ -80,6 +80,7 @@ class Game:
         self.turn = False
         self.dict = word_dictionary
         self.score_dict = letter_values
+        self.bot_depth = bot_depth
 
         # create bot
         if self.mode == "vs_bot":

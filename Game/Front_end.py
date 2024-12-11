@@ -39,12 +39,17 @@ for letter in string.ascii_lowercase:
     tile_images.append(file_name)
 letter_dict = dict(zip(alphabet, tile_images)) # Dictionary mapping letters to their tile_image pathnames
 
+info_button_path = os.path.join(os.path.dirname(__file__), 'misc', 'info_button.png')
+
 # Load audio files
 tile_drop_sound = os.path.join(os.path.dirname(__file__), 'misc', 'sounds', 'click.mp3')
 winner_sound = os.path.join(os.path.dirname(__file__), 'misc', 'sounds', 'winner.mp3')
 score_point_sound = os.path.join(os.path.dirname(__file__), 'misc', 'sounds', 'score.mp3')
 button_press_sound = os.path.join(os.path.dirname(__file__), 'misc', 'sounds', 'button_press.mp3')
 error_sound = os.path.join(os.path.dirname(__file__), 'misc', 'sounds', 'error.mp3')
+applause_sound = os.path.join(os.path.dirname(__file__), 'misc', 'sounds', 'applause.mp3')
+switch_sound = os.path.join(os.path.dirname(__file__), 'misc', 'sounds', 'switch.mp3')
+loss_sound = os.path.join(os.path.dirname(__file__), 'misc', 'sounds', 'aww.mp3')
 
 single_leaderboard_path = os.path.join(os.path.dirname(__file__), 'singleplayer_leaderboard.txt')
 multi_leaderboard_path = os.path.join(os.path.dirname(__file__), 'multiplayer_leaderboard.txt')
@@ -90,6 +95,8 @@ def draw_board(board):
     """
     Function to draw the board
 
+    Return:
+        info_button_rect (pygame.rect.Rect): pygame object representing the info button created
     """
     screen.fill(scr_color)
     for column in range(column_size):
@@ -103,7 +110,11 @@ def draw_board(board):
             if board[row][column] != "*":
                 tile_image = load_tile_image(board[row][column])
                 screen.blit(tile_image, (column * square_size + 10, height - (row + 1) * square_size + 10))
+    info_button_image = pygame.image.load(info_button_path)  # Directly load the image using pygame.image.load()
+    info_button_image = pygame.transform.scale(info_button_image, (35, 35))
+    info_button_rect = screen.blit(info_button_image, (width - 45, 10))
     pygame.display.update()
+    return info_button_rect
 
 def add_to_leaderboard(name, new_score):
     leaderboard_path = ""
@@ -259,7 +270,7 @@ def display_rack(curr_rack, selected_idx):
     Function to display rack screen, including player turn, rack tiles, two buttons, and scores
 
         curr_rack (list): Array of strings representing the rack
-        selected (bool): Boolean stating whether a tile has been selected (Default is False)
+        selected (bool): Boolean stating whether a tile has been selected (default is False)
 
     Return:
         rack_menu_buttons (list): Array of pygame.rect.Rect objects for text buttons and
@@ -376,7 +387,7 @@ def display_pause_menu():
     # Display Pause Menu
     screen.fill(scr_color)
 
-    font = pygame.font.Font('freesansbold.ttf', 32)
+    font = pygame.font.Font('freesansbold.ttf', 36)
     text = font.render("Game Paused", True, txt_color)
     textRect = text.get_rect()
     textRect.center = (width / 2, height / 2 - 100)
@@ -549,6 +560,8 @@ def display_game_over(game_state, sound_played, leaderboard_updated):
 
     winning_player = str(game_state)
     winning_text = "Player " + winning_player + " won!"
+    if vs_bot and game_state == 2:
+        winning_text = "The Bot won!"
     if game_state == 1:
         color = BLUE
         if not sound_played:
@@ -557,11 +570,18 @@ def display_game_over(game_state, sound_played, leaderboard_updated):
     elif game_state == 2:
         color = DUSTY_RED
         if not sound_played:
-            sound = pygame.mixer.Sound(winner_sound)
-            sound.play()
+            if not vs_bot:
+                sound = pygame.mixer.Sound(winner_sound)
+                sound.play()
+            else:
+                sound = pygame.mixer.Sound(loss_sound)
+                sound.play()
     else:
         color = GREEN
         winning_text = "It's a tie!"
+        if not sound_played:
+            sound = pygame.mixer.Sound(applause_sound)
+            sound.play()
     font = pygame.font.Font('freesansbold.ttf', 50)
     text = font.render(winning_text, True, color)
     textRect = text.get_rect()
@@ -578,7 +598,7 @@ def display_game_over(game_state, sound_played, leaderboard_updated):
 
     return restart_button_rect, quit_button_rect
 
-def display_mode_selection():
+def display_mode_selection(vs_bot):
     """
     Function to display the mode selection screen, including light/dark theme selection and number of players
 
@@ -625,9 +645,28 @@ def display_mode_selection():
     ok_bttn_color = bttn_color if num_players > 0 else LIGHT_GRAY
     ok_txt_color = bttn_txt_color if num_players > 0 else DARK_GRAY
     ok_button_rect = create_text_button(ok_button_center, message = "Okay", text_color = ok_txt_color, button_color = ok_bttn_color)
+
+    if vs_bot:
+        switch_color = bttn_color
+        pos = 35
+    else:
+        switch_color = LIGHT_GRAY
+        pos = -5
+    switch_x = two_players_center[0] + 110
+    switch_y = two_players_center[1] + 80
+    font = pygame.font.Font('freesansbold.ttf', 18)
+    vs_bot_text = font.render("VS Bot?:", True, txt_color)
+    vs_textRect = vs_bot_text.get_rect()
+    vs_textRect.center = (switch_x - 60, switch_y + 10)
+    screen.blit(vs_bot_text, vs_textRect)
+    switch_body_rect = pygame.Rect(switch_x, switch_y, 60, 20)
+    pygame.draw.rect(screen, switch_color, switch_body_rect)
+    switch_head_rect = pygame.Rect(switch_x + pos, switch_y - 5, 30, 30)
+    pygame.draw.rect(screen, WHITE, switch_head_rect, border_radius=4)
+
     pygame.display.update()
 
-    return dark_button_rect, light_button_rect, one_player_button_rect, two_players_button_rect, ok_button_rect # return all buttons
+    return dark_button_rect, light_button_rect, one_player_button_rect, two_players_button_rect, ok_button_rect, switch_head_rect, switch_body_rect
 
 def display_found_words(page):
     """
@@ -702,6 +741,13 @@ def display_found_words(page):
     return buttons
 
 def display_bot_menu(bot_moved, rack_idx=-1, col_idx=-1):
+    """
+    Displays the bot's decisions as it makes them in real time
+
+        bot_moved (bool): whether the bot has made its decision yet
+        rack_idx (int): rack index selected by bot (default is -1)
+        col_idx (int): column index selected by bot (default is -1)
+    """
     menu_width = width * 0.6  # Adjusted width for longer messages
     menu_height = height * 0.4  # Adjusted height
     menu_y = (height - menu_height) / 2
@@ -861,6 +907,77 @@ def display_leaderboard(title="Leaderboard"):
     # Return the rectangle for the Close button to handle interaction
     return close_button_rect
 
+def display_info_menu():
+    """
+    Displays a help menu with information about necessary key inputs to play
+
+    Return:
+        x_button_rect (pygame.rect.Rect): pygame object representing the "X" text button box
+    """
+    menu_width = width * 0.6  # Adjusted width for longer messages
+    menu_height = height * 0.6  # Adjusted height
+    menu_x = (width - menu_width) / 2
+    menu_y = (height - menu_height) / 2
+    dimensions = (menu_width, menu_height)
+    text_list = []
+    strings_list = []
+
+    title_tuple = ("Help Menu", WHITE, (width / 2, menu_y + 50), 0, ' ', 32)
+    text_list.append(title_tuple)
+
+    strings_list.append(("Press 'R' to view the current player's rack", 40))
+    strings_list.append(("Press 'B' or 'ESC' to view the board from the", 20))
+    strings_list.append(("rack menu", 40))
+    strings_list.append(("Press 'L' to view the leaderboard for the", 20))
+    strings_list.append(("current gamemode", 40))
+    strings_list.append(("Press 'P' to pause the game", 40))
+    strings_list.append(("Press 'W' to view all current words made by", 20))
+    strings_list.append(("each player", 40))
+    strings_list.append(("Click on tiles when viewing board to see if", 20))
+    strings_list.append(("any words were generated at said tile", 0))
+
+    y_offset = 140
+    for line, spacing in strings_list:
+        text_list.append((line, WHITE, (width / 2, menu_y + y_offset), 0, ' ', 16))
+        y_offset += spacing
+
+    close_button_center = (menu_x + menu_width / 2 + 150, menu_y + 10)
+    close_button_tuple = (close_button_center, "X", 24, WHITE, RED, (50, 50))
+    buttons_list = [close_button_tuple]
+
+    buttons = display_pop_up(dimensions, text_list, buttons_list)
+    pygame.draw.line(screen, WHITE, (menu_x + 40, menu_y + 90), (menu_x + menu_width - 40, menu_y + 90), width=3)
+    x_button_rect = buttons[0]
+    pygame.display.update()
+    return x_button_rect
+
+def display_difficulty_menu():
+    menu_width = width * 0.8
+    menu_height = height * 0.3
+    menu_x = (width - menu_width) / 2
+    menu_y = (height - menu_height) / 2
+    dimensions = (menu_width, menu_height)
+
+    text_list = [(f"Selected Difficulty: {bot_difficulty}", WHITE, (width / 2, menu_y + 50), 0, ' ', 28)]
+
+    confirm_button_center = (width / 2 - 60, menu_y + menu_height - 60)
+    confirm_button_tuple = (confirm_button_center, "Confirm", 24, BLACK, GREEN, (120, 40))
+    buttons_list = [confirm_button_tuple]
+
+    buttons = display_pop_up(dimensions, text_list, buttons_list)
+    confirm_button_rect = buttons[0]
+
+    difficulty_bar_rect = pygame.Rect(menu_x + 40, menu_y + menu_height / 2 - 10, 480, 16)
+    pygame.draw.rect(screen, LIGHT_GRAY, difficulty_bar_rect)
+    for x_offset in range(80, 480, 80):
+        pygame.draw.line(screen, DARKER_GRAY, (menu_x + 40 + x_offset, menu_y + menu_height / 2 - 10), (menu_x + 40 + x_offset, menu_y + menu_height / 2 + 6), 1)
+    x_offset = 80 * (bot_difficulty - 1)
+    difficulty_selector_rect = pygame.Rect(menu_x + 28 + x_offset, menu_y + menu_height / 2 - 14, 24, 24)
+    pygame.draw.rect(screen, WHITE, difficulty_selector_rect, border_radius=2)
+    pygame.display.update()
+
+    return confirm_button_rect, difficulty_bar_rect
+
 # Create game object
 curr_game = Back_end.Game()
 board = curr_game.get_board() 
@@ -868,7 +985,6 @@ rack = curr_game.get_rack()
 game_over = curr_game.get_game_state()
 turn = curr_game.get_turn()
 
-# Draw the board
 pygame.display.update()
 screen.fill(DARKER_GRAY)
 start_button_rect = display_start_menu()
@@ -895,6 +1011,7 @@ end_screen_displayed = False
 mode = "dark"
 num_players = 0
 vs_bot = False
+bot_difficulty = 0
 curr_name = ""
 displaying_name_menu = False
 entering_name = False
@@ -903,6 +1020,8 @@ displaying_end_menu = False
 names = []
 new_leaderboard = False
 displaying_leaderboard = False
+displaying_info_menu = False
+displaying_difficulty_menu = False
 
 # Score and word information
 turn_info = None
@@ -917,8 +1036,12 @@ while True:
     turn = curr_game.get_turn()
     scores = curr_game.get_scores()
     if game_over and not displaying_end_menu:
-        displaying_name_menu = True
-        text_box_rect, enter_button_rect = ask_for_name(curr_name, entering_name)
+        if not vs_bot:
+            displaying_name_menu = True
+            text_box_rect, enter_button_rect = ask_for_name(curr_name, entering_name)
+        else:
+            displaying_end_menu = True
+            restart_button_rect, quit_button_rect = display_game_over(curr_game.get_game_state(), False, new_leaderboard)
     if vs_bot and turn == 1:
         if not game_over:
             display_bot_menu(False)
@@ -939,7 +1062,7 @@ while True:
             words_made[curr_player] = curr_words
             board = curr_game.get_board()
             time.sleep(2)
-            draw_board(board)
+            info_button_rect = draw_board(board)
             if scores[1] != new_scores[1]:
                 sound = pygame.mixer.Sound(score_point_sound)
                 sound.play()
@@ -958,7 +1081,7 @@ while True:
                     continue
                 continue
         if game_initiated and not game_started: # Display mode selection menu
-            dark_button_rect, light_button_rect, one_player_button_rect, two_players_button_rect, ok_button_rect = display_mode_selection()
+            dark_button_rect, light_button_rect, one_player_button_rect, two_players_button_rect, ok_button_rect, switch_head_rect, switch_body_rect = display_mode_selection(vs_bot)
             if event.type == pygame.MOUSEBUTTONDOWN:
                 mouse_pos = event.pos
                 if dark_button_rect.collidepoint(mouse_pos) and mode != "dark": # "Dark Mode" button pressed
@@ -970,7 +1093,7 @@ while True:
                     bttn_txt_color = BLACK
                     board_color = MAHOGANY
                     mode = "dark"
-                    display_mode_selection()
+                    display_mode_selection(vs_bot)
                 elif light_button_rect.collidepoint(mouse_pos) and mode != "light": # "Light Mode" button pressed
                     sound = pygame.mixer.Sound(button_press_sound)
                     sound.play()
@@ -980,30 +1103,62 @@ while True:
                     bttn_txt_color = WHITE
                     board_color = MAHOGANY
                     mode = "light"
-                    display_mode_selection()
+                    display_mode_selection(vs_bot)
                 elif ok_button_rect.collidepoint(mouse_pos) and num_players > 0: # "Okay" button pressed
+                    if num_players == 1:
+                        curr_game = Back_end.Game(mode="single")
+                    if num_players == 2:
+                        if vs_bot:
+                            displaying_difficulty_menu = True
+                            bot_difficulty = 1
+                            confirm_button_rect, difficulty_bar_rect = display_difficulty_menu()
+                            game_started = True
+                            continue
+                        else:
+                            curr_game = Back_end.Game()
                     game_started = True
                     sound = pygame.mixer.Sound(button_press_sound)
                     sound.play()
-                    draw_board(board)
+                    info_button_rect = draw_board(board)
                 elif one_player_button_rect.collidepoint(mouse_pos) and num_players != 1: # "1 Player" button pressed
                     # Create game object
-                    curr_game = Back_end.Game(mode="vs_bot", bot_depth=3)
+                    curr_game = Back_end.Game(mode="single")
                     sound = pygame.mixer.Sound(button_press_sound)
                     sound.play()
                     num_players = 1
-                    vs_bot = True
+                    vs_bot = False
                 elif two_players_button_rect.collidepoint(mouse_pos) and num_players != 2:
                     curr_game = Back_end.Game()
                     sound = pygame.mixer.Sound(button_press_sound)
                     sound.play()
                     num_players = 2
                     vs_bot = False
+                elif (switch_head_rect.collidepoint(mouse_pos) or switch_body_rect.collidepoint(mouse_pos)) and num_players == 2:
+                    sound = pygame.mixer.Sound(switch_sound)
+                    sound.play()
+                    vs_bot = not vs_bot
+                    dark_button_rect, light_button_rect, one_player_button_rect, two_players_button_rect, ok_button_rect, switch_head_rect, switch_body_rect = display_mode_selection(vs_bot)
                 board = curr_game.get_board()
                 rack = curr_game.get_rack()
                 game_over = curr_game.get_game_state()
                 turn = curr_game.get_turn()
-                continue
+            continue
+        if displaying_difficulty_menu and event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+            mouse_pos = event.pos
+            if confirm_button_rect.collidepoint(mouse_pos):
+                sound = pygame.mixer.Sound(button_press_sound)
+                sound.play()
+                displaying_difficulty_menu = False
+                curr_game = Back_end.Game(mode="vs_bot", bot_depth=bot_difficulty)
+                info_button_rect = draw_board(board)
+            elif difficulty_bar_rect.collidepoint(mouse_pos):
+                x_pos = event.pos[0]
+                new_bot_difficulty = round(1 + (x_pos - 110) / 80)
+                if bot_difficulty != new_bot_difficulty:
+                    sound = pygame.mixer.Sound(switch_sound)
+                    sound.play()
+                    bot_difficulty = new_bot_difficulty
+                confirm_button_rect, difficulty_bar_rect = display_difficulty_menu()
             continue
         if displaying_name_menu and event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
             mouse_pos = event.pos
@@ -1080,7 +1235,7 @@ while True:
                     if game_over:
                         restart_button_rect, quit_button_rect = display_game_over(game_over, True, False)
                     else:
-                        draw_board(board)
+                        info_button_rect = draw_board(board)
             continue
         if game_over and not displaying_name_menu:
             if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
@@ -1088,7 +1243,7 @@ while True:
                 if restart_button_rect.collidepoint(mouse_pos):
                     sound = pygame.mixer.Sound(button_press_sound)
                     curr_game = Back_end.Game()
-                    # Update boolean flags
+                    # Reset boolean flags
                     game_started = False
                     game_initiated = False
                     paused = False
@@ -1110,6 +1265,7 @@ while True:
                     mode = "dark"
                     num_players = 0
                     vs_bot = False
+                    bot_difficulty = 0
                     curr_name = ""
                     displaying_name_menu = False
                     entering_name = False
@@ -1118,6 +1274,14 @@ while True:
                     names = []
                     new_leaderboard = False
                     displaying_leaderboard = False
+                    displaying_info_menu = False
+                    displaying_difficulty_menu = False
+
+                    # Reset score and word information
+                    turn_info = None
+                    p1_points_gained = 0
+                    p2_points_gained = 0
+                    words_made = {1 : [], 2 : []}
                 elif quit_button_rect.collidepoint(mouse_pos):
                     sound = pygame.mixer.Sound(button_press_sound)
                     sound.play()
@@ -1125,7 +1289,7 @@ while True:
                 continue
         if displaying_words:
             if not displaying_words_menu:
-                draw_board(board)
+                info_button_rect = draw_board(board)
                 buttons = display_tile_definitions(col_idx, row_idx, word_idx)
                 x_button_rect = buttons[0]
                 if len(buttons) > 1:
@@ -1141,7 +1305,7 @@ while True:
                     word_idx = 0
                     displaying_words = False
                     displaying_words_menu = False
-                    draw_board(board)
+                    info_button_rect = draw_board(board)
                     continue
                 if len(buttons) > 1:
                     if left_button_rect.collidepoint(mouse_pos):
@@ -1166,7 +1330,7 @@ while True:
                 mouse_pos = event.pos
                 if x_button_rect.collidepoint(mouse_pos):
                     if game_started:
-                        draw_board(board)
+                        info_button_rect = draw_board(board)
                     sound = pygame.mixer.Sound(button_press_sound)
                     sound.play()
                     error_message = ""
@@ -1202,6 +1366,10 @@ while True:
                 left_button_rect = found_words_buttons[1]
                 right_button_rect = found_words_buttons[2]
             elif event.key == pygame.K_l and not showing_player_words:
+                if vs_bot:
+                    error_message = "No leaderboard for VS Bot. Check back later..."
+                    display_error_message(error_message)
+                    continue
                 sound = pygame.mixer.Sound(button_press_sound)
                 sound.play()
                 displaying_leaderboard = True
@@ -1214,7 +1382,7 @@ while True:
                         sound = pygame.mixer.Sound(button_press_sound)
                         sound.play()
                         paused = False
-                        draw_board(board)
+                        info_button_rect = draw_board(board)
                         continue
                     elif options_button_rect.collidepoint(mouse_pos):
                         sound = pygame.mixer.Sound(button_press_sound)
@@ -1226,7 +1394,7 @@ while True:
                     sound = pygame.mixer.Sound(button_press_sound)
                     sound.play()
                     paused = False
-                    draw_board(board)
+                    info_button_rect = draw_board(board)
                     continue
             continue
         if showing_player_words:
@@ -1236,7 +1404,7 @@ while True:
                     sound = pygame.mixer.Sound(button_press_sound)
                     sound.play()
                     showing_player_words = False
-                    draw_board(board)
+                    info_button_rect = draw_board(board)
                 elif left_button_rect.collidepoint(mouse_pos):
                     if page > 0:
                         page -= 1
@@ -1255,7 +1423,17 @@ while True:
                         x_button_rect = found_words_buttons[0]
                         left_button_rect = found_words_buttons[1]
                         right_button_rect = found_words_buttons[2]
-                continue
+            continue
+        
+        if displaying_info_menu:
+            if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                mouse_pos = event.pos
+                if x_button_rect.collidepoint(mouse_pos):
+                    sound = pygame.mixer.Sound(button_press_sound)
+                    sound.play()
+                    displaying_info_menu = False
+                    info_button_rect = draw_board(board)
+            continue
 
         if showing_rack:
             if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
@@ -1277,7 +1455,7 @@ while True:
                     sound = pygame.mixer.Sound(button_press_sound)
                     sound.play()
                     showing_rack = False
-                    draw_board(board)
+                    info_button_rect = draw_board(board)
                     selected_idx = tmp_selected_idx = -1
                     selected = tmp_selected = False
                     continue
@@ -1289,7 +1467,7 @@ while True:
                     tmp_selected = False
                     tmp_selected_idx = -1
                     showing_rack = False
-                    draw_board(board)
+                    info_button_rect = draw_board(board)
                     pygame.draw.rect(screen, scr_color, (0, 0, width, square_size))
                     rack = curr_game.get_rack()
                     pos_x = event.pos[0]
@@ -1306,7 +1484,7 @@ while True:
                     sound = pygame.mixer.Sound(button_press_sound)
                     sound.play()
                     showing_rack = False
-                    draw_board(board)
+                    info_button_rect = draw_board(board)
                     tmp_selected = False
                     continue
                 elif tmp_selected and event.key == pygame.K_RETURN:
@@ -1317,9 +1495,16 @@ while True:
                     tmp_selected = False
                     tmp_selected_idx = -1
                     showing_rack = False
-                    draw_board(board)
+                    info_button_rect = draw_board(board)
         if not displaying_words and not showing_rack and game_started:
             if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                mouse_pos = event.pos
+                if info_button_rect.collidepoint(mouse_pos):
+                    sound = pygame.mixer.Sound(button_press_sound)
+                    sound.play()
+                    displaying_info_menu = True
+                    x_button_rect = display_info_menu()
+                    continue
                 board = curr_game.get_board()
                 turn = curr_game.get_turn()
                 if selected:
@@ -1350,7 +1535,7 @@ while True:
                     selected_idx = -1
                     selected = False
                     if game_started:
-                        draw_board(board)
+                        info_button_rect = draw_board(board)
                     sound = pygame.mixer.Sound(tile_drop_sound)
                     sound.play()
                     new_scores = curr_game.get_scores()
@@ -1390,4 +1575,4 @@ while True:
                 for _ in range(7):
                     curr_game.place_piece(0, col_idx)
             board = curr_game.get_board()
-            draw_board(board)
+            info_button_rect = draw_board(board)
