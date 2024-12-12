@@ -70,7 +70,7 @@ Click on tiles when viewing the board to see if any words were generated at said
 
 These rules can also be easily visualized at any time in-game by clicking on the blue "*i*" button.
 
-<img width="95%" alt="Screenshot 2024-12-12 at 12 50 47 PM" src="https://github.com/user-attachments/assets/de980d57-5305-45f2-a300-0dfda2dfc3a5" />
+<img width="60%" alt="Screenshot 2024-12-12 at 12 50 47 PM" src="https://github.com/user-attachments/assets/de980d57-5305-45f2-a300-0dfda2dfc3a5" />
 
 ## Authors/Contributors: 
 - *Phillip Nakamura*: Backend
