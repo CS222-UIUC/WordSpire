@@ -283,7 +283,8 @@ def display_rack(curr_rack, selected_idx):
     if curr_game.get_turn():
         text = font.render("Player 2's Turn", True, txt_color)
     else:
-        text = font.render("Player 1's Turn", True, txt_color)
+        msg = "Player 1's Turn" if num_players == 2 else "Player's Rack"
+        text = font.render(msg, True, txt_color)
     text_rect = text.get_rect()
     text_rect.center = (width / 2, 200)
     screen.blit(text, text_rect)
@@ -291,12 +292,14 @@ def display_rack(curr_rack, selected_idx):
     # Display player score
     font = pygame.font.Font('freesansbold.ttf', 24)
     p1_score, p2_score = curr_game.get_scores()
-    p1_msg = "Player 1 Score: " + str(p1_score)
-    p2_msg = "Player 2 Score: " + str(p2_score)
+    p1_msg = "Player 1 Score: " + str(p1_score) if num_players == 2 else "Player Score: " + str(p1_score)
+    p2_msg = "Player 2 Score: " + str(p2_score) if num_players == 2 else ""
+    p1_x = width / 4 - 50 if num_players == 2 else width / 2
     if p1_points_gained > 0:
         p1_pts_gained_txt = font.render(f"+{p1_points_gained}", True, BLUE)
         p1_pts_rect = p1_pts_gained_txt.get_rect()
-        p1_pts_rect.center = (width / 4 + 33, height - 60)
+        p1_pts_x = p1_x + 83 if num_players == 2 else p1_x + 73
+        p1_pts_rect.center = (p1_pts_x, height - 60)
         screen.blit(p1_pts_gained_txt, p1_pts_rect)
     if p2_points_gained > 0:
         p2_pts_gained_txt = font.render(f"+{p2_points_gained}", True, DUSTY_RED)
@@ -307,7 +310,7 @@ def display_rack(curr_rack, selected_idx):
     p2_text = font.render(p2_msg, True, txt_color)
     p1_rect = p1_text.get_rect()
     p2_rect = p2_text.get_rect()
-    p1_rect.center = (width / 4 - 50, height - 30)
+    p1_rect.center = (p1_x, height - 30)
     p2_rect.center = (3 * width / 4 + 50, height - 30)
     screen.blit(p1_text, p1_rect)
     screen.blit(p2_text, p2_rect)
@@ -689,7 +692,8 @@ def display_found_words(page):
     
     text_list = []
     if page == 0:
-        title_tuple = ("Player 1 Words", BLUE, (width / 2, menu_y + 100), 0, ' ', 32)
+        title_msg = "Player 1 Words" if num_players == 2 else "Player Words"
+        title_tuple = (title_msg, BLUE, (width / 2, menu_y + 100), 0, ' ', 32)
         text_list.append(title_tuple)
         p1_words = words_made.get(1)
         p1_words_str = ""
@@ -729,12 +733,13 @@ def display_found_words(page):
         right_text_color = DARK_GRAY
         right_button_color = LIGHT_GRAY
 
-    left_button_center = (menu_x + 10, menu_y + menu_height - 60)
-    right_button_center = (menu_x + menu_width / 2 + 150, menu_y + menu_height - 60)
-    left_button_tuple = (left_button_center, "<", 24, left_text_color, left_button_color, (50, 50))
-    buttons_list.append(left_button_tuple)
-    right_button_tuple = (right_button_center, ">", 24, right_text_color, right_button_color, (50, 50))
-    buttons_list.append(right_button_tuple)
+    if num_players == 2:
+        left_button_center = (menu_x + 10, menu_y + menu_height - 60)
+        right_button_center = (menu_x + menu_width / 2 + 150, menu_y + menu_height - 60)
+        left_button_tuple = (left_button_center, "<", 24, left_text_color, left_button_color, (50, 50))
+        buttons_list.append(left_button_tuple)
+        right_button_tuple = (right_button_center, ">", 24, right_text_color, right_button_color, (50, 50))
+        buttons_list.append(right_button_tuple)
     buttons = display_pop_up(dimensions, text_list, buttons_list)
     pygame.display.update()
 
@@ -952,6 +957,13 @@ def display_info_menu():
     return x_button_rect
 
 def display_difficulty_menu():
+    """
+    Function to display a pop-up asking the user to input their desired difficulty level
+
+    Return:
+        confirm_button_rect (pygame.rect.Rect): pygame object representing the confirm text button
+        difficulty_bar_rect (pygame.rect.Rect): pygame object representing the difficulty bar for interactivity
+    """
     menu_width = width * 0.8
     menu_height = height * 0.3
     menu_x = (width - menu_width) / 2
@@ -1338,7 +1350,7 @@ while True:
                     continue
             else:
                 continue
-        if game_started and not showing_rack and event.type == pygame.KEYDOWN and not paused:
+        if game_started and not showing_rack and event.type == pygame.KEYDOWN and not paused and not displaying_info_menu:
             if not game_over:
                 if event.key == pygame.K_p:
                     sound = pygame.mixer.Sound(button_press_sound)
@@ -1363,8 +1375,9 @@ while True:
                 page = 0
                 found_words_buttons = display_found_words(page)
                 x_button_rect = found_words_buttons[0]
-                left_button_rect = found_words_buttons[1]
-                right_button_rect = found_words_buttons[2]
+                if num_players == 2:
+                    left_button_rect = found_words_buttons[1]
+                    right_button_rect = found_words_buttons[2]
             elif event.key == pygame.K_l and not showing_player_words:
                 if vs_bot:
                     error_message = "No leaderboard for VS Bot. Check back later..."
@@ -1405,24 +1418,26 @@ while True:
                     sound.play()
                     showing_player_words = False
                     info_button_rect = draw_board(board)
-                elif left_button_rect.collidepoint(mouse_pos):
-                    if page > 0:
-                        page -= 1
-                        sound = pygame.mixer.Sound(button_press_sound)
-                        sound.play()
-                        found_words_buttons = display_found_words(page)
-                        x_button_rect = found_words_buttons[0]
-                        left_button_rect = found_words_buttons[1]
-                        right_button_rect = found_words_buttons[2]
-                elif right_button_rect.collidepoint(mouse_pos):
-                    if page < 1:
-                        page += 1
-                        sound = pygame.mixer.Sound(button_press_sound)
-                        sound.play()
-                        found_words_buttons = display_found_words(page)
-                        x_button_rect = found_words_buttons[0]
-                        left_button_rect = found_words_buttons[1]
-                        right_button_rect = found_words_buttons[2]
+                    continue
+                if num_players == 2:
+                    if left_button_rect.collidepoint(mouse_pos):
+                        if page > 0:
+                            page -= 1
+                            sound = pygame.mixer.Sound(button_press_sound)
+                            sound.play()
+                            found_words_buttons = display_found_words(page)
+                            x_button_rect = found_words_buttons[0]
+                            left_button_rect = found_words_buttons[1]
+                            right_button_rect = found_words_buttons[2]
+                    elif right_button_rect.collidepoint(mouse_pos):
+                        if page < 1:
+                            page += 1
+                            sound = pygame.mixer.Sound(button_press_sound)
+                            sound.play()
+                            found_words_buttons = display_found_words(page)
+                            x_button_rect = found_words_buttons[0]
+                            left_button_rect = found_words_buttons[1]
+                            right_button_rect = found_words_buttons[2]
             continue
         
         if displaying_info_menu:
@@ -1499,7 +1514,7 @@ while True:
         if not displaying_words and not showing_rack and game_started:
             if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                 mouse_pos = event.pos
-                if info_button_rect.collidepoint(mouse_pos):
+                if info_button_rect.collidepoint(mouse_pos) and not selected:
                     sound = pygame.mixer.Sound(button_press_sound)
                     sound.play()
                     displaying_info_menu = True
@@ -1515,13 +1530,14 @@ while True:
                     # Update turn_info
                     turn_object = curr_game.game_history[-1]
                     curr_player = 1
-                    if curr_game.get_turn() == 1:
-                        p1_points_gained = turn_object.score_gained
-                        p2_points_gained = 0
-                    else:
+                    if turn == 1:
                         p2_points_gained = turn_object.score_gained
                         p1_points_gained = 0
-                        curr_player = 2
+                        if num_players == 2:
+                            curr_player = 2
+                    else:
+                        p1_points_gained = turn_object.score_gained
+                        p2_points_gained = 0
                     curr_words = words_made[curr_player]
                     if len(turn_object.words_formed) > 0:
                         for word in turn_object.words_formed:
@@ -1570,9 +1586,3 @@ while True:
                     selected_idx = -1
                     pygame.draw.rect(screen, scr_color, (0, 0, width, square_size))
                     pygame.display.update()
-        if event.type == pygame.KEYDOWN and event.key == pygame.K_f:
-            for col_idx in range(7):
-                for _ in range(7):
-                    curr_game.place_piece(0, col_idx)
-            board = curr_game.get_board()
-            info_button_rect = draw_board(board)
