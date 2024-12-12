@@ -385,7 +385,7 @@ def display_pause_menu():
 
     Return:
         resume_button_rect (pygame.rect.Rect): pygame object representing the "Resume" text button box
-        options_button_rect (pygame.rect.Rect): pygame object representing the "Options" text button box
+        exit_button_rect (pygame.rect.Rect): pygame object representing the "Restart" text button box
     """
     # Display Pause Menu
     screen.fill(scr_color)
@@ -400,12 +400,12 @@ def display_pause_menu():
     resume_button_center = (width / 2 - 60, height / 2)
     resume_button_rect = create_text_button(resume_button_center, "Resume", 26, text_color = bttn_txt_color, button_color = bttn_color)
 
-    # Create Options button
-    options_button_center = (width / 2 - 60, height / 2 + 70)
-    options_button_rect = create_text_button(options_button_center, "Options", 26, text_color = bttn_txt_color, button_color = bttn_color)
+    # Create Restart button
+    exit_button_center = (width / 2 - 60, height / 2 + 70)
+    exit_button_rect = create_text_button(exit_button_center, "Restart", 26, text_color = bttn_txt_color, button_color = bttn_color)
 
     pygame.display.update()
-    return resume_button_rect, options_button_rect
+    return resume_button_rect, exit_button_rect
 
 def create_text_button(location, message="", font_size=28, text_color=BLACK, button_color=GREEN, size=(120, 50)):
     """
@@ -1350,13 +1350,13 @@ while True:
                     continue
             else:
                 continue
-        if game_started and not showing_rack and event.type == pygame.KEYDOWN and not paused and not displaying_info_menu:
+        if game_started and not showing_rack and event.type == pygame.KEYDOWN and not paused and not displaying_info_menu and not displaying_difficulty_menu:
             if not game_over:
                 if event.key == pygame.K_p:
                     sound = pygame.mixer.Sound(button_press_sound)
                     sound.play()
                     paused = True
-                    resume_button_rect, options_button_rect = display_pause_menu()
+                    resume_button_rect, exit_button_rect = display_pause_menu()
                 elif event.key == pygame.K_r:
                     sound = pygame.mixer.Sound(button_press_sound)
                     sound.play()
@@ -1397,11 +1397,51 @@ while True:
                         paused = False
                         info_button_rect = draw_board(board)
                         continue
-                    elif options_button_rect.collidepoint(mouse_pos):
+                    elif exit_button_rect.collidepoint(mouse_pos):
                         sound = pygame.mixer.Sound(button_press_sound)
-                        sound.play()
-                        # Do nothing for now when player presses the 'Options' button
-                        pass
+                        curr_game = Back_end.Game()
+                        # Reset boolean flags
+                        game_started = False
+                        game_initiated = False
+                        paused = False
+                        showing_rack = False
+                        selected = False
+                        selected_idx = -1
+                        tmp_selected = False
+                        tmp_selected_idx = -1
+                        error_message = ""
+                        error_message_drawn = False
+                        displaying_words = False
+                        displaying_words_menu = False
+                        showing_player_words = False
+                        col_idx = -1
+                        row_idx = -1
+                        word_idx = 0
+                        scores = curr_game.get_scores()
+                        end_screen_displayed = False
+                        mode = "dark"
+                        num_players = 0
+                        vs_bot = False
+                        bot_difficulty = 0
+                        curr_name = ""
+                        displaying_name_menu = False
+                        entering_name = False
+                        player_idx = 0
+                        displaying_end_menu = False
+                        names = []
+                        new_leaderboard = False
+                        displaying_leaderboard = False
+                        displaying_info_menu = False
+                        displaying_difficulty_menu = False
+
+                        # Reset score and word information
+                        turn_info = None
+                        p1_points_gained = 0
+                        p2_points_gained = 0
+                        words_made = {1 : [], 2 : []}
+                        screen.fill(scr_color)
+                        start_button_rect = display_start_menu()
+                        continue
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
                     sound = pygame.mixer.Sound(button_press_sound)
@@ -1511,7 +1551,7 @@ while True:
                     tmp_selected_idx = -1
                     showing_rack = False
                     info_button_rect = draw_board(board)
-        if not displaying_words and not showing_rack and game_started:
+        if not displaying_words and not showing_rack and game_started and not showing_player_words:
             if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                 mouse_pos = event.pos
                 if info_button_rect.collidepoint(mouse_pos) and not selected:
