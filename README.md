@@ -28,7 +28,33 @@ The back end is designed to support the implementation of our game and its vario
 
 ## How to Play Wordspire:
 
+#### To install and run Wordspire:
 
+1. Clone this entire repository somewhere convenient on your machine
+2. Ensure you have python3 installed, you can install python here: https://www.python.org/downloads/
+3. Open the WordSpire repository in your terminal
+4. (Optional) Creating a venv is optional but recommended. To do so run the following two lines which create and activate your virtual environment.
+
+###### Mac/Linux:
+```
+python3 -m venv venv
+source ./venv/bin/activate
+```
+###### Windows:
+```
+python3 -m venv venv
+venv\Scripts\activate
+```
+5. Install required packages by running
+```
+pip install -r requirements.txt
+```
+6. To launch the game run front_end.py
+```
+python3 Game/Front_end.py
+```
+
+#### Basic controls:
 
 Press 'R' to view the current player's rack
 
