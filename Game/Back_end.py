@@ -32,8 +32,8 @@ class Game:
     # all arguments have a default value but can be overwritten
     def __init__(self, board_size: tuple[int, int] = (7, 7), rack_size: int = 7,
                  letter_bag: list[str] = default_letter_bag, letter_values: dict[str, int] = default_letter_values,
-                 word_dictionary: dict[str, str] = default_word_dictionary, mode: str = "local_mult", min_word_length: int = 2,
-                 num_multipliers=0, len_bonus=default_len_bonus, bot_depth=7):
+                 word_dictionary: dict[str, str] = default_word_dictionary, mode: str = "local_mult", min_word_length: int = 3,
+                 num_multipliers=0, len_bonus=default_len_bonus, bot_depth=3):
         """
         Innitialization function
         Note: all arguments have a defualt value but can be overwritten
